@@ -1,169 +1,103 @@
 # The Playlister
 
-A modern web application for creating, managing, and sharing music playlists with YouTube integration.
-
-## Features
-
-- 🎵 Create and manage personal playlists
-- 🔍 Search and filter playlists by name, user, song title, artist, and year
-- 📺 YouTube video player integration for playing songs
-- 👥 User authentication (login/guest mode)
-- ✏️ Edit playlist details and song collections
-- 🎨 Modern, colorful UI with smooth animations
-- 📱 Responsive design for mobile and desktop
-
-## Tech Stack
-
-- **React 18** - UI library
-- **React Router** - Navigation and routing
-- **Vite** - Build tool and dev server
-- **Lucide React** - Icon library
-- **CSS3** - Styling with gradients and animations
-
-## Prerequisites
-
-Before you begin, ensure you have installed:
-- [Node.js](https://nodejs.org/) (version 16 or higher)
-- [npm](https://www.npmjs.com/) (comes with Node.js)
-
-## Installation
-
-1. **Clone the repository**
-   ```bash
-   git clone <your-repo-url>
-   cd playlister
-   ```
-
-2. **Navigate to the frontend directory**
-   ```bash
-   cd front-end
-   ```
-
-3. **Install dependencies**
-   ```bash
-   npm install
-   ```
-
-## Running the Application
-
-1. **Start the development server**
-   ```bash
-   npm run dev
-   ```
-
-2. **Open your browser**
-   - Navigate to `http://localhost:5173`
-   - The app will automatically reload if you make changes to the code
-
-## Test Account
-
-To test the full functionality with a logged-in user:
-
-- **Email:** `test@playlister.com`
-- **Password:** `test123`
-
-## User Modes
-
-### Guest Mode
-- Click "Continue as Guest" on the home page
-- Browse and play playlists
-- Cannot edit or delete playlists
-- Cannot create new playlists
-
-### Logged In Mode
-- Sign in with test credentials
-- Full access to create, edit, and delete your own playlists
-- Add songs to playlists
-- Manage song catalog
+A modern full-stack web application for creating, managing, and sharing music playlists with YouTube integration.
 
 ## Project Structure
 
 ```
-front-end/
-├── src/
-│   ├── components/
-│   │   ├── common/          # Reusable components (Button, Input, Modal, etc.)
-│   │   ├── auth/            # Authentication components (Login, Create Account, etc.)
-│   │   ├── home/            # Home page component
-│   │   ├── playlists/       # Playlist management components
-│   │   └── songs/           # Song catalog components
-│   ├── App.jsx              # Main app component with routing
-│   ├── App.css              # Global styles
-│   └── main.jsx             # Application entry point
-├── public/                  # Static assets
-├── index.html               # HTML template
-├── package.json             # Dependencies and scripts
-└── vite.config.js           # Vite configuration
+playlister/
+├── front-end/          # React frontend application
+│   ├── src/
+│   ├── public/
+│   ├── package.json
+│   └── README.md      # Frontend-specific documentation
+├── back-end/          # Express + MongoDB backend (coming soon)
+├── .gitignore
+└── README.md          # This file - project overview
 ```
 
-## Available Scripts
+## Overview
 
-- `npm run dev` - Start development server
-- `npm run build` - Build for production
-- `npm run preview` - Preview production build locally
-- `npm run lint` - Run ESLint (if configured)
+The Playlister allows users to create and manage music playlists with YouTube integration. Users can browse songs, create custom playlists, and share them with others.
 
-## Key Features Explained
+### Current Status
+- ✅ **Frontend**: Complete React application with routing, authentication flow, and UI components
+- 🚧 **Backend**: In development (Express + MongoDB)
 
-### Playlist Management
-- Create new playlists with custom names
-- Add multiple songs to playlists
-- Edit playlist details and song order
-- Delete playlists (owner only)
-- Copy playlists from other users
-- Expand/collapse to view all songs in a playlist
+## Quick Start
 
-### Song Catalog
-- Browse all available songs
-- Search by title, artist, or year
-- Add songs to your playlists
-- Edit song metadata
-- Remove songs from catalog
-- View listen count and playlist usage statistics
+### Frontend Development
 
-### Play Modal
-- YouTube video player integration
-- Song list with clickable tracks
-- Previous/Next controls
-- Auto-play next song (when implemented with backend)
+```bash
+cd front-end
+npm install
+npm run dev
+```
 
-## Browser Support
+The app will be available at `http://localhost:5173`
 
-- Chrome (latest)
-- Firefox (latest)
-- Safari (latest)
-- Edge (latest)
+**Test Account:**
+- Email: `test@playlister.com`
+- Password: `test123`
 
-## Known Limitations
+### Backend Development (Coming Soon)
 
-- All data is currently stored in sessionStorage (will be replaced with backend API)
-- YouTube videos use placeholder IDs
-- No real authentication (test account is hardcoded)
-- No persistence between sessions (data resets on page refresh)
+```bash
+cd back-end
+npm install
+npm run dev
+```
 
-## Future Enhancements
+## Tech Stack
 
-- Backend API integration with Express
-- MongoDB database for data persistence
-- Real user authentication with JWT
-- Social features (follow users, like playlists)
-- Playlist sharing with unique URLs
-- Advanced search and filtering
-- Playlist recommendations
-- Audio playback controls
+### Frontend
+- React 18 + Vite
+- React Router
+- Lucide React (icons)
+- CSS3
+
+### Backend (Planned)
+- Node.js + Express
+- MongoDB + Mongoose
+- JWT Authentication
+- bcrypt for password hashing
+
+## Features
+
+### Current (Frontend Only)
+- 🎵 Browse and search playlists
+- 🔍 Filter by name, user, song, artist, year
+- 📺 YouTube video player integration
+- 👥 Authentication flow (UI only, using sessionStorage)
+- ✏️ Create, edit, delete playlists (UI only)
+- 🎨 Modern, responsive design
+
+### Planned (With Backend)
+- 🔐 Real JWT authentication
+- 💾 Persistent data storage in MongoDB
+- 🔄 Real-time playlist updates
+- 👤 User profiles and social features
+- 📊 Analytics and recommendations
+
+## Documentation
+
+- **Frontend README**: See `front-end/README.md` for detailed frontend setup, architecture, and component documentation
+- **Backend README**: Coming soon in `back-end/README.md`
+
+## Development Workflow
+
+1. **Frontend Development**: Work in `front-end/` directory
+2. **Backend Development**: Work in `back-end/` directory (coming soon)
+3. **Integration**: Frontend will connect to backend API
 
 ## Contributing
 
-This is a personal project, but suggestions and feedback are welcome!
+This is a personal learning project. Feel free to fork and experiment!
 
 ## License
 
-MIT License - feel free to use this project for learning purposes.
-
-## Contact
-
-For questions or feedback, please open an issue in the repository.
+MIT License
 
 ---
 
-Built with ❤️ using React and Vite
+**Note**: Frontend is complete and functional with mock data. Backend integration is the next phase of development.

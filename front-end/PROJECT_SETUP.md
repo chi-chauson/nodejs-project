@@ -1,171 +1,369 @@
-# Project Setup Guide
+# Frontend Setup Guide
 
-This guide will help you organize your Playlister project structure for both frontend and future backend development.
+This guide explains the Playlister frontend architecture, setup, and development workflow.
 
-## Step 1: Create Project Structure
+## Project Overview
 
-Create a new repository with this structure:
+The frontend is a React single-page application (SPA) built with Vite. It provides a complete UI for playlist management with mock data, ready to be connected to the backend API.
 
-```
-playlister/
-├── front-end/           # React frontend application
-├── .gitignore          # Git ignore file
-└── README.md           # Main project README
-```
-
-## Step 2: Move Frontend Code
-
-1. Create a `front-end` folder in your project root
-2. Move all your current Vite/React files into `front-end/`:
-   - `src/`
-   - `public/`
-   - `index.html`
-   - `package.json`
-   - `vite.config.js`
-   - `package-lock.json` (if exists)
-   - Any other config files
-
-Your structure should look like:
+## Directory Structure
 
 ```
-playlister/
-├── front-end/
-│   ├── src/
-│   │   ├── components/
-│   │   ├── App.jsx
-│   │   ├── App.css
-│   │   └── main.jsx
-│   ├── public/
-│   ├── index.html
-│   ├── package.json
-│   ├── vite.config.js
-│   └── node_modules/
-├── .gitignore
-└── README.md
+front-end/
+├── src/
+│   ├── components/
+│   │   ├── common/          # Reusable UI components (Button, Input, Modal, etc.)
+│   │   ├── auth/            # Authentication pages and forms
+│   │   ├── home/            # Landing page
+│   │   ├── playlists/       # Playlist management components
+│   │   └── songs/           # Song catalog components
+│   ├── App.jsx              # Main app with React Router
+│   ├── App.css              # Global styles
+│   └── main.jsx             # Application entry point
+├── public/                  # Static assets
+├── index.html               # HTML template
+├── package.json             # Dependencies and scripts
+├── vite.config.js           # Vite configuration
+└── README.md                # This file
 ```
 
-## Step 3: Initialize Git Repository
+## Getting Started
+
+### Prerequisites
+
+- Node.js 16+ and npm installed
+- Basic knowledge of React and JavaScript
+
+### Installation
 
 ```bash
-# Navigate to your project root
-cd playlister
-
-# Initialize git (if not already done)
-git init
-
-# Add the .gitignore file
-# (Copy the provided .gitignore content)
-
-# Add all files
-git add .
-
-# Make your first commit
-git commit -m "Initial commit: Frontend setup with React + Vite"
-```
-
-## Step 4: Create GitHub Repository
-
-1. Go to [GitHub](https://github.com) and create a new repository
-2. **Don't** initialize with README, .gitignore, or license (you already have these)
-3. Copy the repository URL
-
-## Step 5: Push to GitHub
-
-```bash
-# Add the remote repository
-git remote add origin <your-github-repo-url>
-
-# Push to GitHub
-git branch -M main
-git push -u origin main
-```
-
-## Step 6: Verify Everything Works
-
-```bash
-# Navigate to frontend
+# Navigate to frontend directory
 cd front-end
 
-# Install dependencies (if not already done)
+# Install dependencies
 npm install
 
-# Start dev server to test
+# Start development server
 npm run dev
 ```
 
-## Future Backend Setup (Not Yet)
+Access the app at `http://localhost:5173`
 
-When you're ready to add the backend, you'll create:
+## Component Architecture
+
+### Design Principles
+
+1. **Component Co-location**: Each component has its own CSS file in the same directory
+2. **Reusability**: Common components (Button, Input, Modal) are shared across features
+3. **Single Responsibility**: Each component has one clear purpose
+4. **Props Over State**: Pass data down, lift state up
+
+### Component Hierarchy
 
 ```
-playlister/
-├── front-end/          # Your existing React app
-├── back-end/           # Future Express + MongoDB backend
-│   ├── src/
-│   ├── package.json
-│   └── ...
-├── .gitignore
-└── README.md
+App
+├── Router
+    ├── HomePage
+    ├── SignInForm / CreateAccountForm / EditAccountForm
+    ├── PlaylistsPage
+    │   ├── Navbar
+    │   ├── PlaylistSearchSidebar
+    │   ├── PlaylistList
+    │   │   └── PlaylistCard (multiple)
+    │   ├── PlayPlaylistModal
+    │   ├── EditPlaylistModal
+    │   └── ConfirmationModal
+    └── SongCatalogPage
+        ├── Navbar
+        ├── SongSearchSidebar
+        │   └── YouTubePlayer
+        ├── SongList
+        │   └── SongCard (multiple)
+        │       └── SongKebabMenu
+        ├── EditSongModal
+        └── ConfirmationModal
 ```
 
-## Typical Development Workflow
+## Key Features
 
+### 1. Routing (React Router)
+
+Routes defined in `App.jsx`:
+- `/` - Landing page
+- `/signin` - Login
+- `/create-account` - Registration
+- `/edit-account` - Edit profile
+- `/playlists` - Playlist management
+- `/songs` - Song catalog
+
+### 2. Authentication Flow
+
+**Current Implementation** (Mock):
+- Uses `sessionStorage` to store user state
+- Guest mode vs Logged-in mode
+- Test account: `test@playlister.com` / `test123`
+
+**Future** (Backend Integration):
+- Replace with JWT tokens
+- Store in localStorage or httpOnly cookies
+- API calls for login/logout/register
+
+### 3. State Management
+
+Currently using:
+- `useState` for local component state
+- `useEffect` to read from sessionStorage
+- Props for parent-child communication
+
+**When backend is ready:**
+- Consider Context API or Redux for global state
+- API service layer for HTTP requests
+
+### 4. Styling Strategy
+
+- **Component-specific CSS**: Each component has its own `.css` file
+- **Global styles**: `App.css` for resets and shared styles
+- **Naming convention**: BEM-inspired (e.g., `.playlist-card`, `.playlist-card-header`)
+- **Responsive**: Media queries for mobile/tablet/desktop
+
+## Common Components Guide
+
+### Button Component
+
+```jsx
+import Button from './components/common/Button';
+
+<Button 
+  variant="primary"    // primary, secondary, delete, edit, copy, play
+  size="medium"        // small, medium, large
+  onClick={handleClick}
+  icon={}      // optional icon
+>
+  Button Text
+
+```
+
+### Input Component
+
+```jsx
+import Input from './components/common/Input';
+
+<Input
+  type="text"
+  placeholder="Search..."
+  value={value}
+  onChange={(e) => setValue(e.target.value)}
+  onClear={() => setValue('')}
+  showClear={true}
+/>
+```
+
+### Modal Component
+
+```jsx
+import Modal from './components/common/Modal';
+
+<Modal
+  isOpen={isOpen}
+  onClose={() => setIsOpen(false)}
+  title="Modal Title"
+  headerColor="green"
+  backgroundColor="green"
+>
+  Modal content here
+
+```
+
+## Data Flow
+
+### Current (Mock Data)
+```
+Component State → sessionStorage → UI Display
+```
+
+### Future (Backend Integration)
+```
+User Action → API Request → Backend → Response → Update State → UI Display
+```
+
+## Adding New Features
+
+### Example: Adding a "Favorites" Feature
+
+1. **Create Components**
+   ```
+   src/components/favorites/
+   ├── FavoritesPage.jsx
+   ├── FavoritesPage.css
+   ├── FavoritesList.jsx
+   └── FavoritesList.css
+   ```
+
+2. **Add Route**
+   ```jsx
+   // In App.jsx
+   <Route path="/favorites" element={<FavoritesPage />} />
+   ```
+
+3. **Update Navigation**
+   ```jsx
+   // In Navbar.jsx
+   <button onClick={() => navigate('/favorites')}>
+     Favorites
+   </button>
+   ```
+
+4. **State Management**
+   - Add state in component or use Context
+   - Store data in sessionStorage temporarily
+   - Plan API integration for backend
+
+## Performance Optimization
+
+### Current Optimizations
+- Vite's fast HMR (Hot Module Replacement)
+- Component lazy loading ready (not implemented yet)
+- CSS is scoped per component
+
+### Future Optimizations
+- React.lazy() and Suspense for code splitting
+- Memoization with useMemo and useCallback
+- Virtual scrolling for large lists
+- Image optimization
+
+## Testing Strategy (Future)
+
+Recommended testing setup:
+- **Unit tests**: Jest + React Testing Library
+- **Component tests**: Test user interactions
+- **E2E tests**: Playwright or Cypress
+- **API tests**: Mock API responses
+
+## Development Workflow
+
+1. **Create feature branch**
+   ```bash
+   git checkout -b feature/new-feature
+   ```
+
+2. **Develop with hot reload**
+   ```bash
+   npm run dev
+   ```
+
+3. **Test in browser**
+   - Use React DevTools
+   - Check responsive design
+   - Test all user flows
+
+4. **Build for production**
+   ```bash
+   npm run build
+   npm run preview  # Test production build
+   ```
+
+5. **Commit changes**
+   ```bash
+   git add .
+   git commit -m "Add new feature"
+   git push origin feature/new-feature
+   ```
+
+## Connecting to Backend (Future)
+
+### Step 1: Create API Service Layer
+
+```javascript
+// src/services/api.js
+const API_BASE_URL = 'http://localhost:5000/api';
+
+export const api = {
+  login: (credentials) => 
+    fetch(`${API_BASE_URL}/auth/login`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(credentials)
+    }),
+  
+  getPlaylists: (token) =>
+    fetch(`${API_BASE_URL}/playlists`, {
+      headers: { 'Authorization': `Bearer ${token}` }
+    }),
+  
+  // ... more API methods
+};
+```
+
+### Step 2: Replace sessionStorage with JWT
+
+```javascript
+// Store token
+localStorage.setItem('token', response.token);
+
+// Get token
+const token = localStorage.getItem('token');
+
+// Remove token on logout
+localStorage.removeItem('token');
+```
+
+### Step 3: Update Components
+
+Replace mock data with API calls:
+```javascript
+useEffect(() => {
+  const fetchPlaylists = async () => {
+    const token = localStorage.getItem('token');
+    const response = await api.getPlaylists(token);
+    const data = await response.json();
+    setPlaylists(data);
+  };
+  fetchPlaylists();
+}, []);
+```
+
+## Troubleshooting
+
+### Common Issues
+
+**Port already in use:**
 ```bash
-# Frontend development
-cd front-end
-npm run dev
-
-# (Future) Backend development
-cd back-end
-npm run dev
-
-# Git workflow
-git add .
-git commit -m "Your commit message"
-git push
+# Change port in vite.config.js
+export default defineConfig({
+  server: { port: 3000 }
+})
 ```
 
-## Important Notes
+**CSS not updating:**
+- Hard refresh browser (Cmd/Ctrl + Shift + R)
+- Clear browser cache
+- Restart dev server
 
-1. **Don't commit `node_modules/`** - It's in .gitignore
-2. **Don't commit `.env` files** - They contain sensitive data
-3. **Don't commit `dist/` or `build/`** - These are generated files
-4. **Do commit `package.json` and `package-lock.json`** - Others need these to install dependencies
+**Component not rendering:**
+- Check console for errors
+- Verify import/export syntax
+- Check React DevTools component tree
 
-## Useful Git Commands
+**Route not working:**
+- Verify route path in App.jsx
+- Check navigation onClick handlers
+- Ensure react-router-dom is installed
 
-```bash
-# Check status
-git status
+## Resources
 
-# See what changed
-git diff
+- [React Documentation](https://react.dev/)
+- [Vite Guide](https://vitejs.dev/guide/)
+- [React Router](https://reactrouter.com/)
+- [Lucide React Icons](https://lucide.dev/)
 
-# Create a new branch for a feature
-git checkout -b feature-name
+## Questions?
 
-# Switch back to main
-git checkout main
-
-# Pull latest changes
-git pull origin main
-
-# View commit history
-git log --oneline
-```
-
-## IDE Recommendations
-
-### VS Code Extensions
-- ES7+ React/Redux/React-Native snippets
-- ESLint
-- Prettier - Code formatter
-- Auto Rename Tag
-- GitLens
-
-### WebStorm
-Works great out of the box with React and Vite!
+For issues or questions about the frontend:
+1. Check this README
+2. Review component documentation in code comments
+3. Check the main project README
+4. Open an issue on GitHub
 
 ---
 
-You're now ready to start developing! The frontend is properly organized and ready for future backend integration.
+Happy coding! 🚀
