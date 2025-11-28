@@ -1,81 +1,67 @@
-const { MongoClient, ObjectId } = require('mongodb');
+require('dotenv').config();
+const mongoose = require('mongoose');
 const bcrypt = require('bcrypt');
-
-// MongoDB connection URL
-const MONGO_URL = 'mongodb://localhost:27017';
-const DB_NAME = 'playlister';
+const User = require('../models/User');
+const Song = require('../models/Song');
+const Playlist = require('../models/Playlist');
 
 // Sample base64 avatar (small 1x1 pixel transparent PNG)
 const DEFAULT_AVATAR = 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg==';
 
 async function seedDatabase() {
-    const client = new MongoClient(MONGO_URL);
-
     try {
         console.log('Connecting to MongoDB...');
-        await client.connect();
+        await mongoose.connect(process.env.MONGODB_URI);
         console.log('✅ Connected to MongoDB');
-
-        const db = client.db(DB_NAME);
 
         // Clear existing data
         console.log('\n🗑️  Clearing existing data...');
-        await db.collection('users').deleteMany({});
-        await db.collection('songs').deleteMany({});
-        await db.collection('playlists').deleteMany({});
+        await User.deleteMany({});
+        await Song.deleteMany({});
+        await Playlist.deleteMany({});
         console.log('✅ Cleared existing collections');
 
         // Create Users
         console.log('\n👤 Creating users...');
         const hashedPassword = await bcrypt.hash('test123', 10);
 
-        const users = await db.collection('users').insertMany([
+        const users = await User.insertMany([
             {
-                _id: new ObjectId(),
                 username: 'JoelDemo',
                 email: 'test@playlister.com',
                 passwordHash: hashedPassword,
                 avatar: DEFAULT_AVATAR,
-                playlistCount: 2,
-                createdAt: new Date(),
-                updatedAt: new Date()
+                playlistCount: 2
             },
             {
-                _id: new ObjectId(),
                 username: 'AliceMusic',
                 email: 'alice@playlister.com',
                 passwordHash: hashedPassword,
                 avatar: DEFAULT_AVATAR,
-                playlistCount: 0,
-                createdAt: new Date(),
-                updatedAt: new Date()
+                playlistCount: 0
             },
             {
-                _id: new ObjectId(),
                 username: 'BobRocks',
                 email: 'bob@playlister.com',
                 passwordHash: hashedPassword,
                 avatar: DEFAULT_AVATAR,
-                playlistCount: 0,
-                createdAt: new Date(),
-                updatedAt: new Date()
+                playlistCount: 0
             }
         ]);
 
-        const joelId = users.insertedIds[0];
-        const aliceId = users.insertedIds[1];
-        const bobId = users.insertedIds[2];
+        const joelId = users[0]._id;
+        const aliceId = users[1]._id;
+        const bobId = users[2]._id;
 
-        console.log(`✅ Created ${users.insertedCount} users`);
+        console.log(`✅ Created ${users.length} users`);
         console.log(`   - JoelDemo (test@playlister.com / test123)`);
         console.log(`   - AliceMusic (alice@playlister.com / test123)`);
         console.log(`   - BobRocks (bob@playlister.com / test123)`);
 
         // Create Songs
         console.log('\n🎵 Creating songs...');
-        const songs = await db.collection('songs').insertMany([
+        const songs = await Song.insertMany([
             {
-                _id: new ObjectId(),
                 title: 'Come Fly With Me',
                 artist: 'Frank Sinatra',
                 year: 1958,
@@ -96,12 +82,9 @@ async function seedDatabase() {
                 listensCount: 2,
                 playlists: [],
                 playlistCount: 0,
-                addedBy: joelId,
-                createdAt: new Date(),
-                updatedAt: new Date()
+                addedBy: joelId
             },
             {
-                _id: new ObjectId(),
                 title: 'Fast Train',
                 artist: 'Solomon Burke',
                 year: 1985,
@@ -117,12 +100,9 @@ async function seedDatabase() {
                 listensCount: 1234567,
                 playlists: [],
                 playlistCount: 0,
-                addedBy: joelId,
-                createdAt: new Date(),
-                updatedAt: new Date()
+                addedBy: joelId
             },
             {
-                _id: new ObjectId(),
                 title: 'Highway Star',
                 artist: 'Deep Purple',
                 year: 1982,
@@ -132,12 +112,9 @@ async function seedDatabase() {
                 listensCount: 0,
                 playlists: [],
                 playlistCount: 0,
-                addedBy: joelId,
-                createdAt: new Date(),
-                updatedAt: new Date()
+                addedBy: joelId
             },
             {
-                _id: new ObjectId(),
                 title: 'Space Oddity',
                 artist: 'David Bowie',
                 year: 1969,
@@ -147,12 +124,9 @@ async function seedDatabase() {
                 listensCount: 0,
                 playlists: [],
                 playlistCount: 0,
-                addedBy: joelId,
-                createdAt: new Date(),
-                updatedAt: new Date()
+                addedBy: joelId
             },
             {
-                _id: new ObjectId(),
                 title: 'Rocket Man',
                 artist: 'Elton John',
                 year: 1972,
@@ -162,12 +136,9 @@ async function seedDatabase() {
                 listensCount: 0,
                 playlists: [],
                 playlistCount: 0,
-                addedBy: joelId,
-                createdAt: new Date(),
-                updatedAt: new Date()
+                addedBy: joelId
             },
             {
-                _id: new ObjectId(),
                 title: 'I Wish I Knew',
                 artist: 'Solomon Burke',
                 year: 1968,
@@ -177,20 +148,17 @@ async function seedDatabase() {
                 listensCount: 4567,
                 playlists: [],
                 playlistCount: 0,
-                addedBy: joelId,
-                createdAt: new Date(),
-                updatedAt: new Date()
+                addedBy: joelId
             }
         ]);
 
-        const songIds = Object.values(songs.insertedIds);
-        console.log(`✅ Created ${songs.insertedCount} songs`);
+        const songIds = songs.map(s => s._id);
+        console.log(`✅ Created ${songs.length} songs`);
 
         // Create Playlists
         console.log('\n📋 Creating playlists...');
-        const playlists = await db.collection('playlists').insertMany([
+        const playlists = await Playlist.insertMany([
             {
-                _id: new ObjectId(),
                 name: "Don't be Rude",
                 userId: joelId,
                 username: 'JoelDemo',
@@ -224,7 +192,7 @@ async function seedDatabase() {
                         order: 3
                     }
                 ],
-                listeners: [
+                playlistListeners: [
                     {
                         userId: aliceId,
                         username: 'AliceMusic',
@@ -239,12 +207,9 @@ async function seedDatabase() {
                     }
                 ],
                 listenersCount: 137,
-                isPublic: true,
-                createdAt: new Date('2024-01-15'),
-                updatedAt: new Date('2024-01-15')
+                isPublic: true
             },
             {
-                _id: new ObjectId(),
                 name: 'Spacey',
                 userId: joelId,
                 username: 'JoelDemo',
@@ -278,125 +243,81 @@ async function seedDatabase() {
                     }
                 ],
                 listenersCount: 37,
-                isPublic: true,
-                createdAt: new Date('2024-01-16'),
-                updatedAt: new Date('2024-01-16')
+                isPublic: true
             }
         ]);
 
-        const playlistIds = Object.values(playlists.insertedIds);
-        console.log(`✅ Created ${playlists.insertedCount} playlists`);
+        const playlistIds = playlists.map(p => p._id);
+        console.log(`✅ Created ${playlists.length} playlists`);
 
         // Update songs with playlist references
         console.log('\n🔗 Updating song-playlist references...');
-        await db.collection('songs').updateOne(
-            { _id: songIds[0] },
-            {
-                $set: {
-                    playlists: [
-                        {
-                            playlistId: playlistIds[0],
-                            playlistName: "Don't be Rude",
-                            addedAt: new Date('2024-01-15')
-                        }
-                    ],
-                    playlistCount: 1
+        await Song.findByIdAndUpdate(songIds[0], {
+            playlists: [
+                {
+                    playlistId: playlistIds[0],
+                    playlistName: "Don't be Rude",
+                    addedAt: new Date('2024-01-15')
                 }
-            }
-        );
+            ],
+            playlistCount: 1
+        });
 
-        await db.collection('songs').updateOne(
-            { _id: songIds[1] },
-            {
-                $set: {
-                    playlists: [
-                        {
-                            playlistId: playlistIds[0],
-                            playlistName: "Don't be Rude",
-                            addedAt: new Date('2024-01-15')
-                        }
-                    ],
-                    playlistCount: 123
+        await Song.findByIdAndUpdate(songIds[1], {
+            playlists: [
+                {
+                    playlistId: playlistIds[0],
+                    playlistName: "Don't be Rude",
+                    addedAt: new Date('2024-01-15')
                 }
-            }
-        );
+            ],
+            playlistCount: 123
+        });
 
-        await db.collection('songs').updateOne(
-            { _id: songIds[2] },
-            {
-                $set: {
-                    playlists: [
-                        {
-                            playlistId: playlistIds[0],
-                            playlistName: "Don't be Rude",
-                            addedAt: new Date('2024-01-15')
-                        }
-                    ],
-                    playlistCount: 1
+        await Song.findByIdAndUpdate(songIds[2], {
+            playlists: [
+                {
+                    playlistId: playlistIds[0],
+                    playlistName: "Don't be Rude",
+                    addedAt: new Date('2024-01-15')
                 }
-            }
-        );
+            ],
+            playlistCount: 1
+        });
 
-        await db.collection('songs').updateOne(
-            { _id: songIds[3] },
-            {
-                $set: {
-                    playlists: [
-                        {
-                            playlistId: playlistIds[1],
-                            playlistName: 'Spacey',
-                            addedAt: new Date('2024-01-16')
-                        }
-                    ],
-                    playlistCount: 1
+        await Song.findByIdAndUpdate(songIds[3], {
+            playlists: [
+                {
+                    playlistId: playlistIds[1],
+                    playlistName: 'Spacey',
+                    addedAt: new Date('2024-01-16')
                 }
-            }
-        );
+            ],
+            playlistCount: 1
+        });
 
-        await db.collection('songs').updateOne(
-            { _id: songIds[4] },
-            {
-                $set: {
-                    playlists: [
-                        {
-                            playlistId: playlistIds[1],
-                            playlistName: 'Spacey',
-                            addedAt: new Date('2024-01-16')
-                        }
-                    ],
-                    playlistCount: 1
+        await Song.findByIdAndUpdate(songIds[4], {
+            playlists: [
+                {
+                    playlistId: playlistIds[1],
+                    playlistName: 'Spacey',
+                    addedAt: new Date('2024-01-16')
                 }
-            }
-        );
+            ],
+            playlistCount: 1
+        });
 
         console.log('✅ Updated song-playlist references');
-
-        // Create indexes
-        console.log('\n📊 Creating indexes...');
-
-        await db.collection('users').createIndex({ email: 1 }, { unique: true });
-        await db.collection('users').createIndex({ username: 1 }, { unique: true });
-
-        await db.collection('songs').createIndex({ title: 'text', artist: 'text' });
-        await db.collection('songs').createIndex({ artist: 1, year: 1 });
-        await db.collection('songs').createIndex({ 'listens.userId': 1 });
-        await db.collection('songs').createIndex({ 'playlists.playlistId': 1 });
-
-        await db.collection('playlists').createIndex({ userId: 1 });
-        await db.collection('playlists').createIndex({ name: 'text' });
-        await db.collection('playlists').createIndex({ 'listeners.userId': 1 });
-
-        console.log('✅ Created indexes');
 
         // Summary
         console.log('\n' + '='.repeat(60));
         console.log('✨ Database seeded successfully!');
         console.log('='.repeat(60));
         console.log('\n📊 Summary:');
-        console.log(`   Database: ${DB_NAME}`);
-        console.log(`   Users: ${users.insertedCount}`);
-        console.log(`   Songs: ${songs.insertedCount}`);
-        console.log(`   Playlists: ${playlists.insertedCount}`);
+        console.log(`   Database: ${mongoose.connection.name}`);
+        console.log(`   Users: ${users.length}`);
+        console.log(`   Songs: ${songs.length}`);
+        console.log(`   Playlists: ${playlists.length}`);
         console.log('\n🔑 Test Account:');
         console.log('   Email: test@playlister.com');
         console.log('   Password: test123');
@@ -407,8 +328,9 @@ async function seedDatabase() {
         console.error('❌ Error seeding database:', error);
         process.exit(1);
     } finally {
-        await client.close();
+        await mongoose.connection.close();
         console.log('Disconnected from MongoDB\n');
+        process.exit(0);
     }
 }
 
