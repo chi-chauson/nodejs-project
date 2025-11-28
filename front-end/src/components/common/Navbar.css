@@ -1,0 +1,89 @@
+.navbar {
+    background: linear-gradient(90deg, #ec4899 0%, #a855f7 100%);
+    color: white;
+    padding: 1rem;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+}
+
+.navbar-content {
+    max-width: 1400px;
+    margin: 0 auto;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+
+.navbar-left {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+}
+
+.btn-home {
+    background: white;
+    color: #a855f7;
+    border: none;
+    padding: 0.5rem;
+    border-radius: 0.5rem;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: background-color 0.2s;
+}
+
+.btn-home:hover {
+    background: #f3e8ff;
+}
+
+.btn-nav {
+    background: #9333ea;
+    color: white;
+    border: none;
+    padding: 0.5rem 1rem;
+    border-radius: 0.5rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background-color 0.2s;
+}
+
+.btn-nav:hover {
+    background: #7c3aed;
+}
+
+.btn-nav.active {
+    background: #7c3aed;
+}
+
+.navbar-title {
+    font-size: 1.5rem;
+    font-weight: bold;
+    margin: 0;
+}
+
+.navbar-right {
+    position: relative;
+}
+
+.btn-user {
+    background: white;
+    color: #a855f7;
+    border: none;
+    padding: 0.5rem;
+    border-radius: 50%;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: background-color 0.2s;
+    min-width: 40px;
+    min-height: 40px;
+}
+
+.btn-user:hover {
+    background: #f3e8ff;
+}
+
+.user-avatar {
+    font-size: 1.5rem;
+}

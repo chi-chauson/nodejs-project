@@ -1,0 +1,88 @@
+.kebab-menu {
+    position: relative;
+}
+
+.kebab-btn {
+    background: none;
+    border: none;
+    cursor: pointer;
+    padding: 0.25rem;
+    color: #374151;
+    transition: color 0.2s;
+    display: flex;
+    align-items: center;
+}
+
+.kebab-btn:hover {
+    color: #1f2937;
+}
+
+.kebab-dropdown {
+    position: absolute;
+    right: 0;
+    top: calc(100% + 0.25rem);
+    background: white;
+    border-radius: 0.5rem;
+    box-shadow: 0 10px 15px rgba(0, 0, 0, 0.2);
+    overflow: hidden;
+    min-width: 200px;
+    z-index: 10;
+}
+
+.kebab-item {
+    width: 100%;
+    padding: 0.75rem 1rem;
+    background: none;
+    border: none;
+    text-align: left;
+    cursor: pointer;
+    font-size: 0.875rem;
+    color: #374151;
+    transition: background-color 0.2s;
+    font-family: inherit;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    position: relative;
+}
+
+.kebab-item:hover {
+    background: #f3f4f6;
+}
+
+.kebab-item:not(:last-child) {
+    border-bottom: 1px solid #e5e7eb;
+}
+
+.playlist-submenu {
+    position: absolute;
+    left: 100%;
+    top: 0;
+    background: white;
+    border-radius: 0.5rem;
+    box-shadow: 0 10px 15px rgba(0, 0, 0, 0.2);
+    overflow: hidden;
+    min-width: 180px;
+    margin-left: 0.25rem;
+}
+
+.playlist-item {
+    width: 100%;
+    padding: 0.75rem 1rem;
+    background: #fce7f3;
+    border: none;
+    text-align: left;
+    cursor: pointer;
+    font-size: 0.875rem;
+    color: #374151;
+    transition: background-color 0.2s;
+    font-family: inherit;
+}
+
+.playlist-item:hover {
+    background: #fbcfe8;
+}
+
+.playlist-item:not(:last-child) {
+    border-bottom: 1px solid #f9a8d4;
+}

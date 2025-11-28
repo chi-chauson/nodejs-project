@@ -1,0 +1,39 @@
+.song-main {
+    flex: 1;
+    background: linear-gradient(180deg, #fefce8 0%, #fce7f3 100%);
+    border-radius: 1rem;
+    padding: 1.5rem;
+    box-shadow: 0 10px 15px rgba(0, 0, 0, 0.1);
+}
+
+.song-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 1.5rem;
+}
+
+.song-count {
+    color: #374151;
+    font-weight: 600;
+}
+
+.song-list {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+    margin-bottom: 1.5rem;
+}
+
+.btn-new-song {
+    margin: 0 auto;
+    display: flex;
+}
+
+@media (max-width: 768px) {
+    .song-header {
+        flex-direction: column;
+        gap: 1rem;
+        align-items: flex-start;
+    }
+}

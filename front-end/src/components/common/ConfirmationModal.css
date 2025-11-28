@@ -1,0 +1,32 @@
+.confirmation-content {
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
+    padding: 1rem 0;
+}
+
+.confirmation-message {
+    font-size: 1.25rem;
+    color: #1f2937;
+    margin: 0;
+    line-height: 1.6;
+}
+
+.confirmation-warning {
+    font-size: 0.95rem;
+    color: #374151;
+    margin: 0;
+    padding: 0.75rem;
+    background: rgba(255, 255, 255, 0.5);
+    border-radius: 0.5rem;
+}
+
+.confirmation-actions {
+    display: flex;
+    gap: 1rem;
+    padding-top: 0.5rem;
+}
+
+.confirmation-actions button {
+    flex: 1;
+}

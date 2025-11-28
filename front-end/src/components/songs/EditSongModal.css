@@ -1,0 +1,16 @@
+.edit-song-content {
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
+}
+
+.edit-song-actions {
+    display: flex;
+    gap: 1rem;
+    padding-top: 1rem;
+    border-top: 2px solid rgba(255, 255, 255, 0.3);
+}
+
+.edit-song-actions button {
+    flex: 1;
+}

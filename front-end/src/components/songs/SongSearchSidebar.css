@@ -1,0 +1,23 @@
+.song-sidebar {
+    width: 16rem;
+    background: linear-gradient(180deg, #fefce8 0%, #fce7f3 100%);
+    border-radius: 1rem;
+    padding: 1.5rem;
+    box-shadow: 0 10px 15px rgba(0, 0, 0, 0.1);
+    height: fit-content;
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
+}
+
+.sidebar-player {
+    margin-top: 1rem;
+    border-radius: 0.5rem;
+    overflow: hidden;
+}
+
+@media (max-width: 1024px) {
+    .song-sidebar {
+        width: 100%;
+    }
+}

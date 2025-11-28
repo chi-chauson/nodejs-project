@@ -1,0 +1,22 @@
+.playlists-page {
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    background: linear-gradient(135deg, #fbb6ce 0%, #d8b4fe 50%, #93c5fd 100%);
+}
+
+.playlists-content {
+    flex: 1;
+    max-width: 1400px;
+    width: 100%;
+    margin: 0 auto;
+    padding: 1.5rem;
+    display: flex;
+    gap: 1.5rem;
+}
+
+@media (max-width: 1024px) {
+    .playlists-content {
+        flex-direction: column;
+    }
+}
