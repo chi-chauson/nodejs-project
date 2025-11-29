@@ -8,18 +8,35 @@ const Playlist = require('../models/Playlist');
 // Sample base64 avatar (small 1x1 pixel transparent PNG)
 const DEFAULT_AVATAR = 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg==';
 
+// Check if --clean flag is passed
+const isCleanOnly = process.argv.includes('--clean');
+
+async function cleanDatabase() {
+    console.log('\n🗑️  Clearing existing data...');
+    await User.deleteMany({});
+    await Song.deleteMany({});
+    await Playlist.deleteMany({});
+    console.log('✅ Cleared existing collections');
+}
+
 async function seedDatabase() {
     try {
         console.log('Connecting to MongoDB...');
         await mongoose.connect(process.env.MONGODB_URI);
         console.log('✅ Connected to MongoDB');
 
-        // Clear existing data
-        console.log('\n🗑️  Clearing existing data...');
-        await User.deleteMany({});
-        await Song.deleteMany({});
-        await Playlist.deleteMany({});
-        console.log('✅ Cleared existing collections');
+        // Always clean first
+        await cleanDatabase();
+
+        // If --clean flag, stop here
+        if (isCleanOnly) {
+            console.log('\n✨ Database cleaned successfully!');
+            console.log('💡 Run "npm run seed" to populate with test data.\n');
+            await mongoose.connection.close();
+            console.log('Disconnected from MongoDB\n');
+            process.exit(0);
+            return;
+        }
 
         // Create Users
         console.log('\n👤 Creating users...');

@@ -78,6 +78,12 @@ The server will start on `http://localhost:5000`
 npm run seed
 ```
 
+## Cleaning the Database
+
+```bash
+npm run seed:clean
+```
+
 This will populate MongoDB with test data (users, songs, playlists).
 
 ## API Endpoints
