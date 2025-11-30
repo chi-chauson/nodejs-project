@@ -56,14 +56,14 @@
 
 .playlist-submenu {
     position: absolute;
-    right: 100%;
+    left: 100%;
     top: 0;
     background: white;
     border-radius: 0.5rem;
     box-shadow: 0 10px 15px rgba(0, 0, 0, 0.2);
     overflow: hidden;
     min-width: 180px;
-    margin-right: 0.25rem;
+    margin-left: 0.25rem;
     z-index: 20;
 }
 

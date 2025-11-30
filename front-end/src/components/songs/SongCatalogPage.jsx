@@ -152,6 +152,7 @@ const SongCatalogPage = () => {
                     onRemove={(song) => setRemovingSong(song)}
                     onNewSong={handleNewSong}
                     userPlaylists={userPlaylists}
+                    currentUser={user}
                 />
             </div>
 

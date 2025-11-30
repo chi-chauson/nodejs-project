@@ -12,7 +12,8 @@ const SongList = ({
     onAddToPlaylist,
     onRemove,
     onNewSong,
-    userPlaylists
+    userPlaylists,
+    currentUser
 }) => {
     return (
         <main className="song-main">
@@ -42,6 +43,7 @@ const SongList = ({
                         onAddToPlaylist={(playlistId) => onAddToPlaylist(song._id, playlistId)}
                         onRemove={() => onRemove(song)}
                         userPlaylists={userPlaylists}
+                        currentUser={currentUser}
                     />
                 ))}
             </div>

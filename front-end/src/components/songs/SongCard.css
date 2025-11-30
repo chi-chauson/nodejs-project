@@ -9,6 +9,10 @@
     transition: box-shadow 0.2s;
 }
 
+.song-card.song-card-owned {
+    border-color: #22c55e;
+}
+
 .song-card:hover {
     box-shadow: 0 6px 12px rgba(0, 0, 0, 0.1);
 }

@@ -14,6 +14,28 @@ const generateToken = (userId) => {
     );
 };
 
+// GET /api/auth/check-email - Check if email is available
+router.get('/check-email', async (req, res) => {
+    try {
+        const { email } = req.query;
+
+        if (!email) {
+            return res.status(400).json({ error: { message: 'Email is required' } });
+        }
+
+        // Check if email exists
+        const existingUser = await User.findOne({ email: email.toLowerCase() });
+
+        res.json({
+            available: !existingUser,
+            message: existingUser ? 'Email already in use' : 'Email is available'
+        });
+    } catch (error) {
+        console.error('Check email error:', error);
+        res.status(500).json({ error: { message: 'Failed to check email' } });
+    }
+});
+
 // POST /api/auth/register - Register new user
 router.post('/register',
     [

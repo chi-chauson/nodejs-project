@@ -209,10 +209,7 @@ router.post('/:id/songs', auth, async (req, res) => {
             return res.status(404).json({ error: { message: 'Song not found' } });
         }
 
-        // Check if song already in playlist
-        if (playlist.songs.some(s => s.songId.toString() === songId)) {
-            return res.status(400).json({ error: { message: 'Song already in playlist' } });
-        }
+        // Note: Duplicates are allowed - same song can appear multiple times
 
         // Add song to playlist
         const order = playlist.songs.length + 1;
@@ -228,14 +225,20 @@ router.post('/:id/songs', auth, async (req, res) => {
 
         await playlist.save();
 
-        // Add playlist to song
-        song.playlists.push({
-            playlistId: playlist._id,
-            playlistName: playlist.name,
-            addedAt: new Date()
-        });
-        song.playlistCount += 1;
-        await song.save();
+        // Add playlist to song (only if not already there - first instance)
+        const alreadyInSongPlaylists = song.playlists.some(
+            p => p.playlistId.toString() === playlist._id.toString()
+        );
+
+        if (!alreadyInSongPlaylists) {
+            song.playlists.push({
+                playlistId: playlist._id,
+                playlistName: playlist.name,
+                addedAt: new Date()
+            });
+            song.playlistCount += 1;
+            await song.save();
+        }
 
         res.json({
             message: 'Song added to playlist',
@@ -260,8 +263,14 @@ router.delete('/:id/songs/:songId', auth, async (req, res) => {
             return res.status(403).json({ error: { message: 'Not authorized to edit this playlist' } });
         }
 
-        // Remove song from playlist
-        playlist.songs = playlist.songs.filter(s => s.songId.toString() !== req.params.songId);
+        // Remove only the FIRST instance of the song from playlist (to support duplicates)
+        const songIndex = playlist.songs.findIndex(s => s.songId.toString() === req.params.songId);
+
+        if (songIndex === -1) {
+            return res.status(404).json({ error: { message: 'Song not found in playlist' } });
+        }
+
+        playlist.songs.splice(songIndex, 1);
 
         // Reorder remaining songs
         playlist.songs.forEach((song, index) => {
@@ -270,11 +279,14 @@ router.delete('/:id/songs/:songId', auth, async (req, res) => {
 
         await playlist.save();
 
-        // Remove playlist from song
-        await Song.findByIdAndUpdate(req.params.songId, {
-            $pull: { playlists: { playlistId: playlist._id } },
-            $inc: { playlistCount: -1 }
-        });
+        // Only update song's playlist count if this was the last instance in the playlist
+        const stillInPlaylist = playlist.songs.some(s => s.songId.toString() === req.params.songId);
+        if (!stillInPlaylist) {
+            await Song.findByIdAndUpdate(req.params.songId, {
+                $pull: { playlists: { playlistId: playlist._id } },
+                $inc: { playlistCount: -1 }
+            });
+        }
 
         res.json({
             message: 'Song removed from playlist',
@@ -305,26 +317,29 @@ router.put('/:id/songs/reorder', auth, async (req, res) => {
             return res.status(403).json({ error: { message: 'Not authorized to edit this playlist' } });
         }
 
-        // Verify all songIds exist in playlist
+        // Verify song count matches
         if (songIds.length !== playlist.songs.length) {
             return res.status(400).json({ error: { message: 'Song count mismatch' } });
         }
 
-        // Create a map of songId to song object
-        const songMap = new Map();
-        playlist.songs.forEach(song => {
-            songMap.set(song.songId.toString(), song);
-        });
+        // Create a pool of available songs (to handle duplicates)
+        // We'll match each songId with an available song from the pool
+        const availableSongs = [...playlist.songs];
 
         // Reorder songs based on provided songIds array
         const reorderedSongs = [];
         for (let i = 0; i < songIds.length; i++) {
             const songId = songIds[i];
-            const song = songMap.get(songId);
 
-            if (!song) {
-                return res.status(400).json({ error: { message: `Song ${songId} not found in playlist` } });
+            // Find the first available song with matching songId
+            const songIndex = availableSongs.findIndex(s => s.songId.toString() === songId);
+
+            if (songIndex === -1) {
+                return res.status(400).json({ error: { message: `Song ${songId} not found in playlist or already used` } });
             }
+
+            // Remove song from available pool and add to reordered array
+            const song = availableSongs.splice(songIndex, 1)[0];
 
             // Update order
             song.order = i + 1;

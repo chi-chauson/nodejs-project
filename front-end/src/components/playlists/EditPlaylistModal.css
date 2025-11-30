@@ -30,6 +30,31 @@
     justify-content: space-between;
     align-items: center;
     border: 2px solid #f59e0b;
+    cursor: move;
+    transition: all 0.2s;
+}
+
+.song-item-edit.dragging {
+    opacity: 0.5;
+    transform: scale(0.98);
+}
+
+.song-item-edit.drag-over {
+    border-color: #3b82f6;
+    background: #dbeafe;
+    transform: scale(1.02);
+}
+
+.drag-handle {
+    display: flex;
+    align-items: center;
+    color: #6b7280;
+    cursor: grab;
+    padding-right: 0.75rem;
+}
+
+.drag-handle:active {
+    cursor: grabbing;
 }
 
 .song-info {
@@ -63,6 +88,15 @@
     align-items: center;
     padding-top: 1rem;
     border-top: 2px solid rgba(255, 255, 255, 0.3);
+}
+
+.close-button-green {
+    background-color: #22c55e !important;
+    border-color: #16a34a !important;
+}
+
+.close-button-green:hover {
+    background-color: #16a34a !important;
 }
 
 .undo-redo {

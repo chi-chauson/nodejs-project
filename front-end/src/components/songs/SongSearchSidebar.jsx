@@ -1,5 +1,5 @@
 import React from 'react';
-import { Search } from 'lucide-react';
+import { Search, X } from 'lucide-react';
 import Input from '../common/Input';
 import Button from '../common/Button';
 import YouTubePlayer from './YouTubePlayer';
@@ -44,6 +44,13 @@ const SongSearchSidebar = ({ filters, onFilterChange, onSearch, onClear }) => {
                     icon={<Search size={18} />}
                 >
                     Search
+                </Button>
+                <Button
+                    variant="secondary"
+                    onClick={onClear}
+                    icon={<X size={18} />}
+                >
+                    Clear
                 </Button>
             </div>
 

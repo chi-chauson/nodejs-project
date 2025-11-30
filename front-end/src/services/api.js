@@ -47,7 +47,15 @@ export const authAPI = {
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify(userData),
         });
-        return handleResponse(response);
+        const data = await handleResponse(response);
+
+        // Store token in localStorage (auto-login after registration)
+        if (data.token) {
+            localStorage.setItem('authToken', data.token);
+            localStorage.setItem('currentUser', JSON.stringify(data.user));
+        }
+
+        return data;
     },
 
     // Login
@@ -83,6 +91,12 @@ export const authAPI = {
     // Check if user is authenticated
     isAuthenticated: () => {
         return !!getAuthToken();
+    },
+
+    // Check if email is available
+    checkEmail: async (email) => {
+        const response = await fetch(`${API_BASE_URL}/auth/check-email?email=${encodeURIComponent(email)}`);
+        return handleResponse(response);
     },
 };
 

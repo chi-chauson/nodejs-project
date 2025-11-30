@@ -2,7 +2,7 @@ import React, { useState, useRef, useEffect } from 'react';
 import { MoreVertical, ChevronRight } from 'lucide-react';
 import './SongKebabMenu.css';
 
-const SongKebabMenu = ({ song, onEdit, onAddToPlaylist, onRemove, userPlaylists }) => {
+const SongKebabMenu = ({ song, onEdit, onAddToPlaylist, onRemove, userPlaylists, isOwner }) => {
     const [isOpen, setIsOpen] = useState(false);
     const [showPlaylists, setShowPlaylists] = useState(false);
     const menuRef = useRef(null);
@@ -84,33 +84,37 @@ const SongKebabMenu = ({ song, onEdit, onAddToPlaylist, onRemove, userPlaylists 
                         )}
                     </div>
 
-                    <div
-                        className="kebab-item"
-                        onClick={handleEdit}
-                        role="button"
-                        tabIndex={0}
-                        onKeyPress={(e) => {
-                            if (e.key === 'Enter' || e.key === ' ') {
-                                handleEdit();
-                            }
-                        }}
-                    >
-                        Edit Song
-                    </div>
+                    {isOwner && (
+                        <>
+                            <div
+                                className="kebab-item"
+                                onClick={handleEdit}
+                                role="button"
+                                tabIndex={0}
+                                onKeyPress={(e) => {
+                                    if (e.key === 'Enter' || e.key === ' ') {
+                                        handleEdit();
+                                    }
+                                }}
+                            >
+                                Edit Song
+                            </div>
 
-                    <div
-                        className="kebab-item"
-                        onClick={handleRemove}
-                        role="button"
-                        tabIndex={0}
-                        onKeyPress={(e) => {
-                            if (e.key === 'Enter' || e.key === ' ') {
-                                handleRemove();
-                            }
-                        }}
-                    >
-                        Remove from Catalog
-                    </div>
+                            <div
+                                className="kebab-item"
+                                onClick={handleRemove}
+                                role="button"
+                                tabIndex={0}
+                                onKeyPress={(e) => {
+                                    if (e.key === 'Enter' || e.key === ' ') {
+                                        handleRemove();
+                                    }
+                                }}
+                            >
+                                Remove from Catalog
+                            </div>
+                        </>
+                    )}
                 </div>
             )}
         </div>

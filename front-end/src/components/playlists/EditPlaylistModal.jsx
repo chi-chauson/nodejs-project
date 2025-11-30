@@ -1,5 +1,5 @@
-import React, { useState, useEffect } from 'react';
-import { Plus, Copy, X, ChevronUp, ChevronDown } from 'lucide-react';
+import React, { useState, useEffect, useRef } from 'react';
+import { Plus, Copy, X, Undo2, Redo2, GripVertical } from 'lucide-react';
 import Modal from '../common/Modal';
 import Button from '../common/Button';
 import Input from '../common/Input';
@@ -13,6 +13,18 @@ const EditPlaylistModal = ({ playlist, isOpen, onClose, onSave }) => {
     const [showAddSongModal, setShowAddSongModal] = useState(false);
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState('');
+
+    // Undo/Redo state
+    const [history, setHistory] = useState([]);
+    const [historyIndex, setHistoryIndex] = useState(-1);
+
+    // Drag and drop state
+    const [draggedIndex, setDraggedIndex] = useState(null);
+    const [dragOverIndex, setDragOverIndex] = useState(null);
+
+    // Auto-save flag
+    const hasUnsavedChanges = useRef(false);
+    const initialSongs = useRef([]);
 
     // Load available songs for adding
     useEffect(() => {
@@ -29,55 +41,83 @@ const EditPlaylistModal = ({ playlist, isOpen, onClose, onSave }) => {
         }
     }, [isOpen]);
 
-    // Update local state when playlist prop changes
+    // Update local state when playlist prop changes and initialize history
     useEffect(() => {
         if (playlist) {
             setPlaylistName(playlist.name || '');
-            setSongs(playlist.songs || []);
+            const initial = playlist.songs || [];
+            setSongs(initial);
+            // Store initial songs for comparison on close
+            initialSongs.current = initial;
+            // Initialize history with the current song order
+            setHistory([initial]);
+            setHistoryIndex(0);
+            hasUnsavedChanges.current = false;
         }
     }, [playlist]);
 
-    const handleRemoveSong = async (song) => {
-        setLoading(true);
-        setError('');
-        try {
-            await playlistAPI.removeSong(playlist._id, song.songId);
-            // Update local state
-            setSongs(songs.filter(s => s.songId !== song.songId));
-            // Notify parent to refresh
-            onSave();
-        } catch (err) {
-            setError(err.message || 'Failed to remove song');
-        } finally {
-            setLoading(false);
+    // Helper function to add to history
+    const addToHistory = (newSongs) => {
+        // Remove any history after current index (for redo)
+        const newHistory = history.slice(0, historyIndex + 1);
+        newHistory.push(newSongs);
+        setHistory(newHistory);
+        setHistoryIndex(newHistory.length - 1);
+        hasUnsavedChanges.current = true;
+    };
+
+    // Undo function
+    const handleUndo = () => {
+        if (historyIndex > 0) {
+            const newIndex = historyIndex - 1;
+            setHistoryIndex(newIndex);
+            setSongs(history[newIndex]);
+            hasUnsavedChanges.current = true;
         }
     };
 
-    const handleAddSong = async (songToAdd) => {
-        setLoading(true);
-        setError('');
-        try {
-            await playlistAPI.addSong(playlist._id, songToAdd._id);
-            // Fetch updated playlist to refresh local songs state
-            const updatedPlaylist = await playlistAPI.getById(playlist._id);
-            setSongs(updatedPlaylist.playlist.songs || []);
-            // Notify parent to refresh
-            onSave();
-            setShowAddSongModal(false);
-        } catch (err) {
-            setError(err.message || 'Failed to add song');
-        } finally {
-            setLoading(false);
+    // Redo function
+    const handleRedo = () => {
+        if (historyIndex < history.length - 1) {
+            const newIndex = historyIndex + 1;
+            setHistoryIndex(newIndex);
+            setSongs(history[newIndex]);
+            hasUnsavedChanges.current = true;
         }
     };
 
-    const handleUpdateName = async () => {
-        if (playlistName === playlist.name) {
-            // No change, just close
-            onClose();
-            return;
-        }
+    const handleRemoveSong = (index) => {
+        const newSongs = songs.filter((_, i) => i !== index);
+        setSongs(newSongs);
+        addToHistory(newSongs);
+    };
 
+    const handleDuplicateSong = (index) => {
+        const songToDuplicate = songs[index];
+        const newSongs = [...songs];
+        // Insert the duplicate right after the original
+        newSongs.splice(index + 1, 0, { ...songToDuplicate });
+        setSongs(newSongs);
+        addToHistory(newSongs);
+    };
+
+    const handleAddSong = (songToAdd) => {
+        // Create a new song entry (duplicates are allowed)
+        const newSong = {
+            songId: songToAdd._id,
+            title: songToAdd.title,
+            artist: songToAdd.artist,
+            year: songToAdd.year,
+            youtubeUrl: songToAdd.youtubeUrl
+        };
+        const newSongs = [...songs, newSong];
+        setSongs(newSongs);
+        addToHistory(newSongs);
+        setShowAddSongModal(false);
+    };
+
+    // Auto-save when closing
+    const handleClose = async () => {
         if (!playlistName.trim()) {
             setError('Playlist name cannot be empty');
             return;
@@ -86,50 +126,113 @@ const EditPlaylistModal = ({ playlist, isOpen, onClose, onSave }) => {
         setLoading(true);
         setError('');
         try {
-            await playlistAPI.update(playlist._id, { name: playlistName });
+            // Save playlist name if changed
+            if (playlistName !== playlist.name) {
+                await playlistAPI.update(playlist._id, { name: playlistName });
+            }
+
+            // Save song changes if any modifications were made
+            if (hasUnsavedChanges.current) {
+                const currentSongIds = songs.map(song => song.songId);
+                const initialSongIds = initialSongs.current.map(song => song.songId);
+
+                // Count occurrences of each song in both arrays
+                const countOccurrences = (arr) => {
+                    const counts = {};
+                    arr.forEach(id => {
+                        counts[id] = (counts[id] || 0) + 1;
+                    });
+                    return counts;
+                };
+
+                const currentCounts = countOccurrences(currentSongIds);
+                const initialCounts = countOccurrences(initialSongIds);
+
+                // Determine which songs to add (including duplicates)
+                const songsToAdd = [];
+                for (const [songId, count] of Object.entries(currentCounts)) {
+                    const initialCount = initialCounts[songId] || 0;
+                    const addCount = count - initialCount;
+                    for (let i = 0; i < addCount; i++) {
+                        songsToAdd.push(songId);
+                    }
+                }
+
+                // Determine which songs to remove (including duplicates)
+                const songsToRemove = [];
+                for (const [songId, count] of Object.entries(initialCounts)) {
+                    const currentCount = currentCounts[songId] || 0;
+                    const removeCount = count - currentCount;
+                    for (let i = 0; i < removeCount; i++) {
+                        songsToRemove.push(songId);
+                    }
+                }
+
+                // Add new songs
+                for (const songId of songsToAdd) {
+                    await playlistAPI.addSong(playlist._id, songId);
+                }
+
+                // Remove deleted songs
+                for (const songId of songsToRemove) {
+                    await playlistAPI.removeSong(playlist._id, songId);
+                }
+
+                // Reorder all songs to match current order
+                await playlistAPI.reorderSongs(playlist._id, currentSongIds);
+            }
+
             // Notify parent to refresh
             onSave();
             onClose();
         } catch (err) {
-            setError(err.message || 'Failed to update playlist');
+            setError(err.message || 'Failed to save changes');
         } finally {
             setLoading(false);
         }
     };
 
-    const handleMoveSong = async (index, direction) => {
-        // direction: 'up' or 'down'
-        const newIndex = direction === 'up' ? index - 1 : index + 1;
+    // Drag and drop handlers
+    const handleDragStart = (e, index) => {
+        setDraggedIndex(index);
+        e.dataTransfer.effectAllowed = 'move';
+    };
 
-        // Validate bounds
-        if (newIndex < 0 || newIndex >= songs.length) {
+    const handleDragOver = (e, index) => {
+        e.preventDefault();
+        e.dataTransfer.dropEffect = 'move';
+        setDragOverIndex(index);
+    };
+
+    const handleDragLeave = () => {
+        setDragOverIndex(null);
+    };
+
+    const handleDrop = (e, dropIndex) => {
+        e.preventDefault();
+        if (draggedIndex === null || draggedIndex === dropIndex) {
+            setDraggedIndex(null);
+            setDragOverIndex(null);
             return;
         }
 
-        // Create new array with swapped songs
         const newSongs = [...songs];
-        const temp = newSongs[index];
-        newSongs[index] = newSongs[newIndex];
-        newSongs[newIndex] = temp;
+        const draggedSong = newSongs[draggedIndex];
 
-        // Update local state immediately for responsive UI
+        // Remove from old position
+        newSongs.splice(draggedIndex, 1);
+        // Insert at new position
+        newSongs.splice(dropIndex, 0, draggedSong);
+
         setSongs(newSongs);
+        addToHistory(newSongs);
+        setDraggedIndex(null);
+        setDragOverIndex(null);
+    };
 
-        // Send reorder request to backend
-        setLoading(true);
-        setError('');
-        try {
-            const songIds = newSongs.map(song => song.songId);
-            await playlistAPI.reorderSongs(playlist._id, songIds);
-            // Notify parent to refresh
-            onSave();
-        } catch (err) {
-            setError(err.message || 'Failed to reorder songs');
-            // Revert on error
-            setSongs(songs);
-        } finally {
-            setLoading(false);
-        }
+    const handleDragEnd = () => {
+        setDraggedIndex(null);
+        setDragOverIndex(null);
     };
 
     return (
@@ -174,30 +277,34 @@ const EditPlaylistModal = ({ playlist, isOpen, onClose, onSave }) => {
                             </p>
                         ) : (
                             songs.map((song, index) => (
-                                <div key={song.songId || index} className="song-item-edit">
+                                <div
+                                    key={`${song.songId}-${index}`}
+                                    className={`song-item-edit ${dragOverIndex === index ? 'drag-over' : ''} ${draggedIndex === index ? 'dragging' : ''}`}
+                                    draggable
+                                    onDragStart={(e) => handleDragStart(e, index)}
+                                    onDragOver={(e) => handleDragOver(e, index)}
+                                    onDragLeave={handleDragLeave}
+                                    onDrop={(e) => handleDrop(e, index)}
+                                    onDragEnd={handleDragEnd}
+                                >
+                                    <div className="drag-handle" title="Drag to reorder">
+                                        <GripVertical size={20} />
+                                    </div>
                                     <span className="song-info">
                                         {index + 1}. {song.title} by {song.artist} ({song.year})
                                     </span>
                                     <div className="song-actions">
                                         <button
                                             className="icon-btn"
-                                            onClick={() => handleMoveSong(index, 'up')}
-                                            title="Move Up"
-                                            disabled={loading || index === 0}
+                                            onClick={() => handleDuplicateSong(index)}
+                                            title="Duplicate"
+                                            disabled={loading}
                                         >
-                                            <ChevronUp size={20} />
+                                            <Copy size={20} />
                                         </button>
                                         <button
                                             className="icon-btn"
-                                            onClick={() => handleMoveSong(index, 'down')}
-                                            title="Move Down"
-                                            disabled={loading || index === songs.length - 1}
-                                        >
-                                            <ChevronDown size={20} />
-                                        </button>
-                                        <button
-                                            className="icon-btn"
-                                            onClick={() => handleRemoveSong(song)}
+                                            onClick={() => handleRemoveSong(index)}
                                             title="Remove"
                                             disabled={loading}
                                         >
@@ -210,19 +317,33 @@ const EditPlaylistModal = ({ playlist, isOpen, onClose, onSave }) => {
                     </div>
 
                     <div className="edit-actions">
+                        <div className="undo-redo">
+                            <Button
+                                variant="secondary"
+                                icon={<Undo2 size={18} />}
+                                onClick={handleUndo}
+                                disabled={loading || historyIndex <= 0}
+                                title="Undo"
+                            >
+                                Undo
+                            </Button>
+                            <Button
+                                variant="secondary"
+                                icon={<Redo2 size={18} />}
+                                onClick={handleRedo}
+                                disabled={loading || historyIndex >= history.length - 1}
+                                title="Redo"
+                            >
+                                Redo
+                            </Button>
+                        </div>
                         <Button
                             variant="primary"
-                            onClick={handleUpdateName}
+                            onClick={handleClose}
                             disabled={loading}
+                            className="close-button-green"
                         >
-                            {loading ? 'Saving...' : 'Save & Close'}
-                        </Button>
-                        <Button
-                            variant="secondary"
-                            onClick={onClose}
-                            disabled={loading}
-                        >
-                            Cancel
+                            {loading ? 'Saving...' : 'Close'}
                         </Button>
                     </div>
                 </div>
@@ -264,9 +385,9 @@ const EditPlaylistModal = ({ playlist, isOpen, onClose, onSave }) => {
                                     variant="primary"
                                     size="small"
                                     onClick={() => handleAddSong(song)}
-                                    disabled={loading || songs.some(s => s.songId === song._id)}
+                                    disabled={loading}
                                 >
-                                    {songs.some(s => s.songId === song._id) ? 'Added' : 'Add'}
+                                    Add
                                 </Button>
                             </div>
                         ))}
