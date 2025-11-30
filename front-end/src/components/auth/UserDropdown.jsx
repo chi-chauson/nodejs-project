@@ -1,5 +1,6 @@
 import React, { useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { authAPI } from '../../services/api';
 import './UserDropdown.css';
 
 const UserDropdown = ({ user, onClose }) => {
@@ -23,9 +24,7 @@ const UserDropdown = ({ user, onClose }) => {
     };
 
     const handleLogout = () => {
-        // Clear session storage
-        sessionStorage.removeItem('userMode');
-        sessionStorage.removeItem('currentUser');
+        authAPI.logout();
         navigate('/');
         onClose();
     };

@@ -39,6 +39,10 @@ const playlistSchema = new mongoose.Schema({
             type: Number,
             required: true
         },
+        youtubeId: {
+            type: String,
+            required: false
+        },
         duration: {
             type: String,
             required: true
@@ -54,8 +58,7 @@ const playlistSchema = new mongoose.Schema({
     }],
     playlistListeners: [{  // Renamed from 'listeners' to avoid reserved keyword
         userId: {
-            type: mongoose.Schema.Types.ObjectId,
-            ref: 'User',
+            type: mongoose.Schema.Types.Mixed,  // Allow both ObjectId and 'guest' string
             required: true
         },
         username: {

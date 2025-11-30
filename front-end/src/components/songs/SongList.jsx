@@ -36,11 +36,11 @@ const SongList = ({
             <div className="song-list">
                 {songs.map((song) => (
                     <SongCard
-                        key={song.id}
+                        key={song._id}
                         song={song}
                         onEdit={() => onEdit(song)}
-                        onAddToPlaylist={(playlistId) => onAddToPlaylist(song.id, playlistId)}
-                        onRemove={() => onRemove(song.id)}
+                        onAddToPlaylist={(playlistId) => onAddToPlaylist(song._id, playlistId)}
+                        onRemove={() => onRemove(song)}
                         userPlaylists={userPlaylists}
                     />
                 ))}

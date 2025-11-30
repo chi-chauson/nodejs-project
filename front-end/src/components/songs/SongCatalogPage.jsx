@@ -4,29 +4,15 @@ import SongSearchSidebar from './SongSearchSidebar';
 import SongList from './SongList';
 import EditSongModal from './EditSongModal';
 import ConfirmationModal from '../common/ConfirmationModal';
+import { authAPI, songAPI, playlistAPI } from '../../services/api';
+import { useToast } from '../../contexts/ToastContext';
 import './SongCatalogPage.css';
 
 const SongCatalogPage = () => {
-    const [songs, setSongs] = useState([
-        {
-            id: 1,
-            title: 'Fast Train',
-            artist: 'Solomon Burke',
-            year: 1985,
-            youtubeId: 'dQw4w9WgXcQ',
-            listens: 1234567,
-            playlists: 123
-        },
-        {
-            id: 2,
-            title: 'I Wish I Knew',
-            artist: 'Solomon Burke',
-            year: 1968,
-            youtubeId: 'dQw4w9WgXcQ',
-            listens: 4567,
-            playlists: 3
-        }
-    ]);
+    const toast = useToast();
+    const [songs, setSongs] = useState([]);
+    const [loading, setLoading] = useState(true);
+    const [error, setError] = useState(null);
 
     const [filters, setFilters] = useState({
         title: '',
@@ -37,29 +23,61 @@ const SongCatalogPage = () => {
     const [sortBy, setSortBy] = useState('listens-hi-lo');
     const [editingSong, setEditingSong] = useState(null);
     const [removingSong, setRemovingSong] = useState(null);
-    const [userPlaylists] = useState([
-        { id: 1, name: 'All My Favorites' },
-        { id: 2, name: 'Sad Songs I Like' },
-        { id: 3, name: 'Seventies Roadtrip' }
-    ]);
+    const [userPlaylists, setUserPlaylists] = useState([]);
 
-    // Get current user from sessionStorage
+    // Get current user from localStorage
     const [user, setUser] = useState(null);
 
     useEffect(() => {
-        const userMode = sessionStorage.getItem('userMode');
-        const currentUserData = sessionStorage.getItem('currentUser');
-
-        if (userMode === 'loggedIn' && currentUserData) {
-            setUser(JSON.parse(currentUserData));
-        } else {
-            setUser(null); // Guest mode
-        }
+        const currentUser = authAPI.getCurrentUser();
+        setUser(currentUser);
     }, []);
 
+    // Fetch user's playlists
+    useEffect(() => {
+        const fetchUserPlaylists = async () => {
+            if (!user) {
+                setUserPlaylists([]);
+                return;
+            }
+
+            try {
+                const data = await playlistAPI.getAll();
+                // Filter to only user's own playlists
+                const myPlaylists = (data.playlists || [])
+                    .filter(p => p.username === user.username)
+                    .map(p => ({ id: p._id, name: p.name }));
+                setUserPlaylists(myPlaylists);
+            } catch (err) {
+                console.error('Failed to fetch user playlists:', err);
+                setUserPlaylists([]);
+            }
+        };
+
+        fetchUserPlaylists();
+    }, [user]);
+
+    // Fetch songs from API
+    useEffect(() => {
+        const fetchSongs = async () => {
+            try {
+                setLoading(true);
+                setError(null);
+                const data = await songAPI.getAll({ ...filters, sortBy });
+                setSongs(data.songs || []);
+            } catch (err) {
+                setError(err.message);
+                console.error('Failed to fetch songs:', err);
+            } finally {
+                setLoading(false);
+            }
+        };
+
+        fetchSongs();
+    }, [filters, sortBy]);
+
     const handleSearch = () => {
-        console.log('Search with filters:', filters);
-        // TODO: Implement search logic
+        // Filters already trigger useEffect
     };
 
     const handleClear = () => {
@@ -70,20 +88,47 @@ const SongCatalogPage = () => {
         });
     };
 
-    const handleNewSong = () => {
-        console.log('Create new song');
-        // TODO: Implement new song logic
+    const handleNewSong = async () => {
+        if (!user) {
+            toast.error('Please login to add songs');
+            return;
+        }
+        // Open modal with null song to create a new one
+        setEditingSong({});
     };
 
-    const handleAddToPlaylist = (songId, playlistId) => {
-        console.log('Add song', songId, 'to playlist', playlistId);
-        // TODO: Implement add to playlist logic
+    const handleAddToPlaylist = async (songId, playlistId) => {
+        if (!user) {
+            toast.error('Please login to add songs to playlists');
+            return;
+        }
+
+        try {
+            await playlistAPI.addSong(playlistId, songId);
+            const playlist = userPlaylists.find(p => p.id === playlistId);
+            toast.success(`Song added to "${playlist?.name || 'playlist'}" successfully!`);
+        } catch (err) {
+            // Check if it's a duplicate song error
+            if (err.message?.includes('already in playlist')) {
+                toast.error('This song is already in that playlist');
+            } else {
+                toast.error(err.message || 'Failed to add song to playlist');
+            }
+        }
     };
 
-    const handleRemoveFromCatalog = (song) => {
-        console.log('Remove song from catalog:', song.id);
-        // TODO: Implement remove logic
-        setRemovingSong(null);
+    const handleRemoveFromCatalog = async (song) => {
+        try {
+            await songAPI.delete(song._id);
+            // Refresh songs
+            const data = await songAPI.getAll({ ...filters, sortBy });
+            setSongs(data.songs || []);
+            setRemovingSong(null);
+            toast.success('Song removed from catalog successfully');
+        } catch (err) {
+            toast.error(err.message || 'Failed to remove song');
+            setRemovingSong(null);
+        }
     };
 
     return (
@@ -115,8 +160,14 @@ const SongCatalogPage = () => {
                     song={editingSong}
                     isOpen={!!editingSong}
                     onClose={() => setEditingSong(null)}
-                    onSave={(updated) => {
-                        console.log('Save song:', updated);
+                    onSave={async () => {
+                        // Refresh songs list after save
+                        try {
+                            const data = await songAPI.getAll({ ...filters, sortBy });
+                            setSongs(data.songs || []);
+                        } catch (err) {
+                            console.error('Failed to refresh songs:', err);
+                        }
                         setEditingSong(null);
                     }}
                 />

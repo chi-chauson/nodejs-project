@@ -4,7 +4,7 @@ This guide explains the Playlister frontend architecture, setup, and development
 
 ## Project Overview
 
-The frontend is a React single-page application (SPA) built with Vite. It provides a complete UI for playlist management with mock data, ready to be connected to the backend API.
+The frontend is a React single-page application (SPA) built with Vite. It provides a complete UI for playlist management **fully integrated** with the Express + MongoDB backend API.
 
 ## Directory Structure
 
@@ -98,26 +98,22 @@ Routes defined in `App.jsx`:
 
 ### 2. Authentication Flow
 
-**Current Implementation** (Mock):
-- Uses `sessionStorage` to store user state
+**Implemented** with full backend integration:
+- JWT tokens stored in `localStorage`
 - Guest mode vs Logged-in mode
-- Test account: `test@playlister.com` / `test123`
-
-**Future** (Backend Integration):
-- Replace with JWT tokens
-- Store in localStorage or httpOnly cookies
-- API calls for login/logout/register
+- API calls for login/logout/register via `services/api.js`
+- Token automatically attached to authenticated requests
+- Test accounts: `test@playlister.com`, `alice@playlister.com`, `bob@playlister.com` (all with password `test123`)
 
 ### 3. State Management
 
-Currently using:
+**Implemented**:
 - `useState` for local component state
-- `useEffect` to read from sessionStorage
+- `useEffect` for data fetching from backend API
+- `ToastContext` for global toast notifications
 - Props for parent-child communication
-
-**When backend is ready:**
-- Consider Context API or Redux for global state
-- API service layer for HTTP requests
+- `localStorage` for JWT token persistence
+- API service layer (`services/api.js`) for all HTTP requests
 
 ### 4. Styling Strategy
 
@@ -176,15 +172,21 @@ import Modal from './components/common/Modal';
 
 ## Data Flow
 
-### Current (Mock Data)
+### Current Implementation (Backend Integrated)
 ```
-Component State → sessionStorage → UI Display
+User Action → Component → API Service → Backend Route →
+MongoDB → Response → Update State → UI Display + Toast Notification
 ```
 
-### Future (Backend Integration)
-```
-User Action → API Request → Backend → Response → Update State → UI Display
-```
+### Example Flow: Creating a Playlist
+1. User clicks "New Playlist" button
+2. Component calls `playlistAPI.create({ name, isPublic })`
+3. API service sends `POST /api/playlists` with JWT token
+4. Backend validates, creates playlist in MongoDB
+5. Backend responds with created playlist
+6. Component updates state with new playlist
+7. Toast notification shows success
+8. UI re-renders with updated playlist list
 
 ## Adding New Features
 
@@ -269,62 +271,100 @@ Recommended testing setup:
    git push origin feature/new-feature
    ```
 
-## Connecting to Backend (Future)
+## Backend Integration
 
-### Step 1: Create API Service Layer
+### ✅ Implemented Features
 
+The frontend is **fully integrated** with the backend:
+
+**API Service Layer** (`src/services/api.js`):
 ```javascript
-// src/services/api.js
-const API_BASE_URL = 'http://localhost:5000/api';
+const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
 
-export const api = {
-  login: (credentials) => 
-    fetch(`${API_BASE_URL}/auth/login`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(credentials)
-    }),
-  
-  getPlaylists: (token) =>
-    fetch(`${API_BASE_URL}/playlists`, {
-      headers: { 'Authorization': `Bearer ${token}` }
-    }),
-  
-  // ... more API methods
-};
-```
-
-### Step 2: Replace sessionStorage with JWT
-
-```javascript
-// Store token
-localStorage.setItem('token', response.token);
-
-// Get token
-const token = localStorage.getItem('token');
-
-// Remove token on logout
-localStorage.removeItem('token');
-```
-
-### Step 3: Update Components
-
-Replace mock data with API calls:
-```javascript
-useEffect(() => {
-  const fetchPlaylists = async () => {
-    const token = localStorage.getItem('token');
-    const response = await api.getPlaylists(token);
-    const data = await response.json();
-    setPlaylists(data);
+// Helper function to attach JWT token
+const fetchWithAuth = async (url, options = {}) => {
+  const token = localStorage.getItem('authToken');
+  const headers = {
+    'Content-Type': 'application/json',
+    ...options.headers,
   };
-  fetchPlaylists();
-}, []);
+  if (token) {
+    headers.Authorization = `Bearer ${token}`;
+  }
+  return fetch(url, { ...options, headers });
+};
+
+// API collections
+export const authAPI = {
+  login: async ({ email, password }) => { /* ... */ },
+  register: async ({ username, email, password, avatar }) => { /* ... */ },
+  logout: () => { /* ... */ },
+  // ... more methods
+};
+
+export const playlistAPI = { /* ... */ };
+export const songAPI = { /* ... */ };
+export const userAPI = { /* ... */ };
+```
+
+**JWT Token Management**:
+```javascript
+// Stored on login (in authAPI.login)
+localStorage.setItem('authToken', token);
+localStorage.setItem('currentUser', JSON.stringify(user));
+
+// Retrieved in components
+const token = localStorage.getItem('authToken');
+const user = JSON.parse(localStorage.getItem('currentUser'));
+
+// Cleared on logout
+localStorage.removeItem('authToken');
+localStorage.removeItem('currentUser');
+```
+
+**Component Example** (using API):
+```javascript
+// PlaylistsPage.jsx
+import { playlistAPI } from '../../services/api';
+
+const PlaylistsPage = () => {
+  const [playlists, setPlaylists] = useState([]);
+
+  useEffect(() => {
+    const fetchPlaylists = async () => {
+      try {
+        const data = await playlistAPI.getAll({ sortBy: 'listeners-hi-lo' });
+        setPlaylists(data.playlists);
+      } catch (err) {
+        toast.error(err.message);
+      }
+    };
+    fetchPlaylists();
+  }, []);
+
+  // ... rest of component
+};
 ```
 
 ## Troubleshooting
 
 ### Common Issues
+
+**Backend connection error (Network Error):**
+- Ensure backend is running on `http://localhost:5000`
+- Check backend logs for errors
+- Verify `.env` has correct `VITE_API_URL`
+- Check CORS configuration in backend
+
+**401 Unauthorized:**
+- Token might be expired (JWT expires after 7 days)
+- Try logging out and logging in again
+- Check localStorage for `authToken`
+
+**Empty playlists/songs:**
+- Ensure backend database is seeded: `cd ../back-end && npm run seed`
+- Check MongoDB is running
+- Verify backend API is responding: `curl http://localhost:5000/api/health`
 
 **Port already in use:**
 ```bash
@@ -343,11 +383,28 @@ export default defineConfig({
 - Check console for errors
 - Verify import/export syntax
 - Check React DevTools component tree
+- Check Network tab for failed API requests
 
 **Route not working:**
 - Verify route path in App.jsx
 - Check navigation onClick handlers
 - Ensure react-router-dom is installed
+
+## API Integration Reference
+
+For full API documentation, see:
+- **Backend API**: `../back-end/README.md`
+- **Database Schema**: `../back-end/SCHEMA.md`
+- **Integration Guide**: `../back-end/INTEGRATION_GUIDE.md`
+
+### Quick API Reference
+
+**Available API Collections** (in `services/api.js`):
+- `authAPI` - login, register, logout, getCurrentUser, isAuthenticated
+- `userAPI` - getMe, updateMe, getById
+- `playlistAPI` - getAll, getById, create, update, delete, addSong, removeSong, recordPlay
+- `songAPI` - getAll, getById, create, update, delete, recordListen
+- `healthAPI` - checkHealth
 
 ## Resources
 
@@ -355,15 +412,29 @@ export default defineConfig({
 - [Vite Guide](https://vitejs.dev/guide/)
 - [React Router](https://reactrouter.com/)
 - [Lucide React Icons](https://lucide.dev/)
+- [Express.js Documentation](https://expressjs.com/)
+- [MongoDB Documentation](https://docs.mongodb.com/)
+- [Mongoose Documentation](https://mongoosejs.com/)
+
+## Development Status
+
+✅ **Frontend**: Complete with full backend integration
+✅ **Backend**: Complete REST API with MongoDB
+✅ **Authentication**: JWT-based auth with localStorage
+✅ **CRUD Operations**: All playlist and song operations working
+✅ **Toast Notifications**: Global notification system
+✅ **Error Handling**: Comprehensive error handling
+✅ **Loading States**: Loading indicators during API calls
 
 ## Questions?
 
-For issues or questions about the frontend:
-1. Check this README
-2. Review component documentation in code comments
-3. Check the main project README
-4. Open an issue on GitHub
+For issues or questions:
+1. Check this guide and other documentation files
+2. Review component code comments
+3. Check browser console and Network tab for errors
+4. Verify backend is running and accessible
+5. Check the main project README
 
 ---
 
-Happy coding! 🚀
+Happy coding! The Playlister is fully functional! 🎉

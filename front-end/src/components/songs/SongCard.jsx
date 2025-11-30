@@ -10,8 +10,8 @@ const SongCard = ({ song, onEdit, onAddToPlaylist, onRemove, userPlaylists }) =>
                     {song.title} by {song.artist} ({song.year})
                 </h3>
                 <div className="song-stats">
-                    <span>Listens: {song.listens.toLocaleString()}</span>
-                    <span>Playlists: {song.playlists}</span>
+                    <span>Listens: {song.listensCount?.toLocaleString() || 0}</span>
+                    <span>Playlists: {song.playlistCount || 0}</span>
                 </div>
             </div>
 

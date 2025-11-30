@@ -4,30 +4,30 @@ import { Lock } from 'lucide-react';
 import Input from '../common/Input';
 import Button from '../common/Button';
 import Footer from '../common/Footer';
+import { authAPI } from '../../services/api';
 import './Auth.css';
 
 const SignInForm = () => {
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
     const [error, setError] = useState('');
+    const [loading, setLoading] = useState(false);
     const navigate = useNavigate();
 
-    const handleSubmit = (e) => {
+    const handleSubmit = async (e) => {
         e.preventDefault();
+        setError('');
+        setLoading(true);
 
-        // Test account credentials
-        if (email === 'test@playlister.com' && password === 'test123') {
-            // Set logged in user in sessionStorage
-            const user = {
-                name: 'JoelDemo',
-                email: 'test@playlister.com',
-                avatar: '🎵'
-            };
-            sessionStorage.setItem('userMode', 'loggedIn');
-            sessionStorage.setItem('currentUser', JSON.stringify(user));
+        try {
+            const data = await authAPI.login({ email, password });
+
+            // Login successful - navigate to playlists
             navigate('/playlists');
-        } else {
-            setError('Invalid email or password. Try: test@playlister.com / test123');
+        } catch (err) {
+            setError(err.message || 'Login failed. Please try again.');
+        } finally {
+            setLoading(false);
         }
     };
 
@@ -53,6 +53,7 @@ const SignInForm = () => {
                         value={email}
                         onChange={(e) => setEmail(e.target.value)}
                         onClear={() => setEmail('')}
+                        disabled={loading}
                     />
 
                     <Input
@@ -61,10 +62,11 @@ const SignInForm = () => {
                         value={password}
                         onChange={(e) => setPassword(e.target.value)}
                         onClear={() => setPassword('')}
+                        disabled={loading}
                     />
 
-                    <Button type="submit" variant="dark" size="large">
-                        SIGN IN
+                    <Button type="submit" variant="dark" size="large" disabled={loading}>
+                        {loading ? 'SIGNING IN...' : 'SIGN IN'}
                     </Button>
 
                     <div className="auth-hint">
@@ -75,6 +77,7 @@ const SignInForm = () => {
                 <button
                     className="auth-link"
                     onClick={() => navigate('/create-account')}
+                    disabled={loading}
                 >
                     Don't have an account? <span>Sign Up</span>
                 </button>

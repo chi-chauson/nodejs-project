@@ -74,17 +74,26 @@ The server will start on `http://localhost:5000`
 
 ## Seeding the Database
 
+Populate MongoDB with test data including 3 users, 20 songs, and 5 playlists:
+
 ```bash
 npm run seed
 ```
 
+This creates:
+- **Users**: JoelDemo, AliceMusic, BobRocks (all with password `test123`)
+- **Songs**: 20 classic songs from 60s-90s with YouTube IDs
+- **Playlists**: 5 sample playlists with realistic listen counts
+
 ## Cleaning the Database
+
+Remove all data from the database:
 
 ```bash
 npm run seed:clean
 ```
 
-This will populate MongoDB with test data (users, songs, playlists).
+Note: Running `npm run seed` automatically cleans the database first before seeding.
 
 ## API Endpoints
 
@@ -220,8 +229,19 @@ Add song to playlist (requires auth, owner only).
 #### DELETE `/api/playlists/:id/songs/:songId`
 Remove song from playlist (requires auth, owner only).
 
+#### PUT `/api/playlists/:id/songs/reorder`
+Reorder songs in playlist (requires auth, owner only).
+
+**Request:**
+```json
+{
+  "songId": "507f1f77bcf86cd799439011",
+  "newOrder": 3
+}
+```
+
 #### POST `/api/playlists/:id/play`
-Record a playlist play (requires auth).
+Record a playlist play (optional auth - works for both logged-in users and guests).
 
 ### Songs
 
@@ -258,7 +278,7 @@ Update song (requires auth, creator only).
 Remove song from catalog (requires auth, creator only).
 
 #### POST `/api/songs/:id/listen`
-Record a song listen (requires auth).
+Record a song listen (optional auth - works for both logged-in users and guests).
 
 ### Health Check
 
@@ -416,12 +436,49 @@ db.playlists.find().pretty()
 npm run seed
 ```
 
+## Database Seed Data
+
+The seed script creates realistic test data:
+
+**Test Users:**
+| Username | Email | Password |
+|----------|-------|----------|
+| JoelDemo | test@playlister.com | test123 |
+| AliceMusic | alice@playlister.com | test123 |
+| BobRocks | bob@playlister.com | test123 |
+
+**Sample Songs:**
+20 songs including:
+- "Fast Train" by Solomon Burke (1985)
+- "Wonderful Life" by Black (1986)
+- "Rocket Man" by Elton John (1972)
+- And more classics from the 60s-90s
+
+**Sample Playlists:**
+- "Don't be Rude" (JoelDemo)
+- "80s Hits" (AliceMusic)
+- "Rock Classics" (BobRocks)
+- And more with realistic listen counts
+
+## Integration Status
+
+- ✅ **Backend API**: Complete and functional
+- ✅ **Frontend Integration**: Connected via `services/api.js`
+- ✅ **Authentication Flow**: JWT tokens with localStorage persistence
+- ✅ **Data Persistence**: MongoDB with seeded test data
+- ✅ **Guest Mode**: Optional authentication for browsing
+
 ## Next Steps
 
-1. ✅ Backend API is ready
-2. 🔄 Connect frontend to backend (replace sessionStorage with API calls)
-3. 🎨 Add more features (favorites, comments, etc.)
-4. 🚀 Deploy to production
+Possible enhancements:
+- 📝 Add playlist comments/descriptions
+- ⭐ Add song/playlist favorites
+- 🔍 Advanced search with filters
+- 📊 User analytics dashboard
+- 🎵 Spotify/Apple Music integration
+- 👥 Social features (follow users, share playlists)
+- 🔔 Real-time notifications
+- 🚀 Deploy to production (Vercel + MongoDB Atlas)
 
 ## Troubleshooting
 

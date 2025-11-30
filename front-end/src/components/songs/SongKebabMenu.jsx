@@ -46,7 +46,7 @@ const SongKebabMenu = ({ song, onEdit, onAddToPlaylist, onRemove, userPlaylists 
 
             {isOpen && (
                 <div className="kebab-dropdown">
-                    <button
+                    <div
                         className="kebab-item"
                         onMouseEnter={() => setShowPlaylists(true)}
                         onMouseLeave={() => setShowPlaylists(false)}
@@ -56,32 +56,61 @@ const SongKebabMenu = ({ song, onEdit, onAddToPlaylist, onRemove, userPlaylists 
 
                         {showPlaylists && (
                             <div className="playlist-submenu">
-                                {userPlaylists.map((playlist) => (
-                                    <button
-                                        key={playlist.id}
-                                        className="playlist-item"
-                                        onClick={() => handleAddToPlaylist(playlist.id)}
-                                    >
-                                        {playlist.name}
-                                    </button>
-                                ))}
+                                {!userPlaylists || userPlaylists.length === 0 ? (
+                                    <div className="playlist-item" style={{ opacity: 0.6 }}>
+                                        No playlists available
+                                    </div>
+                                ) : (
+                                    userPlaylists.map((playlist) => (
+                                        <div
+                                            key={playlist.id}
+                                            className="playlist-item"
+                                            onClick={() => {
+                                                handleAddToPlaylist(playlist.id);
+                                            }}
+                                            role="button"
+                                            tabIndex={0}
+                                            onKeyPress={(e) => {
+                                                if (e.key === 'Enter' || e.key === ' ') {
+                                                    handleAddToPlaylist(playlist.id);
+                                                }
+                                            }}
+                                        >
+                                            {playlist.name || 'Unnamed Playlist'}
+                                        </div>
+                                    ))
+                                )}
                             </div>
                         )}
-                    </button>
+                    </div>
 
-                    <button
+                    <div
                         className="kebab-item"
                         onClick={handleEdit}
+                        role="button"
+                        tabIndex={0}
+                        onKeyPress={(e) => {
+                            if (e.key === 'Enter' || e.key === ' ') {
+                                handleEdit();
+                            }
+                        }}
                     >
                         Edit Song
-                    </button>
+                    </div>
 
-                    <button
+                    <div
                         className="kebab-item"
                         onClick={handleRemove}
+                        role="button"
+                        tabIndex={0}
+                        onKeyPress={(e) => {
+                            if (e.key === 'Enter' || e.key === ' ') {
+                                handleRemove();
+                            }
+                        }}
                     >
                         Remove from Catalog
-                    </button>
+                    </div>
                 </div>
             )}
         </div>

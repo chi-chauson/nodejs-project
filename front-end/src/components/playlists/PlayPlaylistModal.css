@@ -42,6 +42,18 @@
     font-size: 0.875rem;
 }
 
+.playlist-avatar {
+    width: 3rem;
+    height: 3rem;
+    background: linear-gradient(135deg, #60a5fa 0%, #a855f7 100%);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.5rem;
+    flex-shrink: 0;
+}
+
 .song-list {
     display: flex;
     flex-direction: column;

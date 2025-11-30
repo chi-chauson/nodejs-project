@@ -37,13 +37,13 @@ const PlaylistList = ({
             <div className="playlist-list">
                 {playlists.map((playlist) => (
                     <PlaylistCard
-                        key={playlist.id}
+                        key={playlist._id}
                         playlist={playlist}
                         onPlay={() => onPlay(playlist)}
                         onEdit={() => onEdit(playlist)}
-                        onDelete={() => onDelete(playlist.id)}
-                        onCopy={() => onCopy(playlist.id)}
-                        canEdit={currentUser && playlist.user === currentUser.name}
+                        onDelete={() => onDelete(playlist)}
+                        onCopy={() => onCopy(playlist._id)}
+                        canEdit={currentUser && playlist.username === currentUser.username}
                     />
                 ))}
             </div>

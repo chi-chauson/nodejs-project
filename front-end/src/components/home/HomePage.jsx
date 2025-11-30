@@ -3,15 +3,15 @@ import { useNavigate } from 'react-router-dom';
 import { Music } from 'lucide-react';
 import Button from '../common/Button';
 import Footer from '../common/Footer';
+import { authAPI } from '../../services/api';
 import './HomePage.css';
 
 const HomePage = () => {
     const navigate = useNavigate();
 
     const handleContinueAsGuest = () => {
-        // Set guest mode flag in sessionStorage
-        sessionStorage.setItem('userMode', 'guest');
-        sessionStorage.removeItem('currentUser');
+        // Clear any existing auth
+        authAPI.logout();
         navigate('/playlists');
     };
 

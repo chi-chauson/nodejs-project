@@ -14,8 +14,8 @@ const PlaylistCard = ({ playlist, onPlay, onEdit, onDelete, onCopy, canEdit }) =
                     </div>
                     <div className="playlist-details">
                         <h3 className="playlist-name">{playlist.name}</h3>
-                        <p className="playlist-user">{playlist.user}</p>
-                        <p className="playlist-listeners">{playlist.listeners} Listeners</p>
+                        <p className="playlist-user">{playlist.username}</p>
+                        <p className="playlist-listeners">{playlist.listenersCount} Listeners</p>
                     </div>
                 </div>
 
@@ -49,7 +49,7 @@ const PlaylistCard = ({ playlist, onPlay, onEdit, onDelete, onCopy, canEdit }) =
             {isExpanded && playlist.songs && playlist.songs.length > 0 && (
                 <div className="playlist-songs-expanded">
                     {playlist.songs.map((song, index) => (
-                        <div key={song.id} className="playlist-song-item">
+                        <div key={song.songId || song._id} className="playlist-song-item">
                             <span className="song-number">{index + 1}.</span>
                             <span className="song-details">
                                 {song.title} by {song.artist} ({song.year})

@@ -24,7 +24,7 @@
     background: white;
     border-radius: 0.5rem;
     box-shadow: 0 10px 15px rgba(0, 0, 0, 0.2);
-    overflow: hidden;
+    overflow: visible;
     min-width: 200px;
     z-index: 10;
 }
@@ -56,14 +56,15 @@
 
 .playlist-submenu {
     position: absolute;
-    left: 100%;
+    right: 100%;
     top: 0;
     background: white;
     border-radius: 0.5rem;
     box-shadow: 0 10px 15px rgba(0, 0, 0, 0.2);
     overflow: hidden;
     min-width: 180px;
-    margin-left: 0.25rem;
+    margin-right: 0.25rem;
+    z-index: 20;
 }
 
 .playlist-item {

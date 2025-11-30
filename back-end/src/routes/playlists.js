@@ -221,6 +221,7 @@ router.post('/:id/songs', auth, async (req, res) => {
             title: song.title,
             artist: song.artist,
             year: song.year,
+            youtubeId: song.youtubeId,
             duration: song.duration,
             order
         });
@@ -285,17 +286,79 @@ router.delete('/:id/songs/:songId', auth, async (req, res) => {
     }
 });
 
+// PUT /api/playlists/:id/songs/reorder - Reorder songs in playlist
+router.put('/:id/songs/reorder', auth, async (req, res) => {
+    try {
+        const { songIds } = req.body;
+
+        if (!Array.isArray(songIds)) {
+            return res.status(400).json({ error: { message: 'songIds must be an array' } });
+        }
+
+        const playlist = await Playlist.findById(req.params.id);
+        if (!playlist) {
+            return res.status(404).json({ error: { message: 'Playlist not found' } });
+        }
+
+        // Check ownership
+        if (playlist.userId.toString() !== req.userId.toString()) {
+            return res.status(403).json({ error: { message: 'Not authorized to edit this playlist' } });
+        }
+
+        // Verify all songIds exist in playlist
+        if (songIds.length !== playlist.songs.length) {
+            return res.status(400).json({ error: { message: 'Song count mismatch' } });
+        }
+
+        // Create a map of songId to song object
+        const songMap = new Map();
+        playlist.songs.forEach(song => {
+            songMap.set(song.songId.toString(), song);
+        });
+
+        // Reorder songs based on provided songIds array
+        const reorderedSongs = [];
+        for (let i = 0; i < songIds.length; i++) {
+            const songId = songIds[i];
+            const song = songMap.get(songId);
+
+            if (!song) {
+                return res.status(400).json({ error: { message: `Song ${songId} not found in playlist` } });
+            }
+
+            // Update order
+            song.order = i + 1;
+            reorderedSongs.push(song);
+        }
+
+        playlist.songs = reorderedSongs;
+        await playlist.save();
+
+        res.json({
+            message: 'Songs reordered successfully',
+            playlist
+        });
+    } catch (error) {
+        console.error('Reorder songs error:', error);
+        res.status(500).json({ error: { message: 'Failed to reorder songs' } });
+    }
+});
+
 // POST /api/playlists/:id/play - Record a playlist play
-router.post('/:id/play', auth, async (req, res) => {
+router.post('/:id/play', optionalAuth, async (req, res) => {
     try {
         const playlist = await Playlist.findById(req.params.id);
         if (!playlist) {
             return res.status(404).json({ error: { message: 'Playlist not found' } });
         }
 
+        // Use special guest ID for non-authenticated users
+        const userId = req.userId || 'guest';
+        const username = req.user?.username || 'Guest';
+
         // Find if user already listened
         const listenerIndex = playlist.playlistListeners.findIndex(
-            l => l.userId.toString() === req.userId.toString()
+            l => l.userId.toString() === userId.toString()
         );
 
         if (listenerIndex >= 0) {
@@ -305,8 +368,8 @@ router.post('/:id/play', auth, async (req, res) => {
         } else {
             // Add new listener
             playlist.playlistListeners.push({
-                userId: req.userId,
-                username: req.user.username,
+                userId: userId,
+                username: username,
                 listenedAt: new Date(),
                 playCount: 1
             });

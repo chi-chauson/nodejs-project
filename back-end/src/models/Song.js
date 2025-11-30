@@ -27,8 +27,7 @@ const songSchema = new mongoose.Schema({
     },
     listens: [{
         userId: {
-            type: mongoose.Schema.Types.ObjectId,
-            ref: 'User',
+            type: mongoose.Schema.Types.Mixed,  // Allow both ObjectId and 'guest' string
             required: true
         },
         username: {

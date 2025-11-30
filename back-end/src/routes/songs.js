@@ -180,22 +180,26 @@ router.delete('/:id', auth, async (req, res) => {
 });
 
 // POST /api/songs/:id/listen - Record a song listen
-router.post('/:id/listen', auth, async (req, res) => {
+router.post('/:id/listen', optionalAuth, async (req, res) => {
     try {
         const song = await Song.findById(req.params.id);
         if (!song) {
             return res.status(404).json({ error: { message: 'Song not found' } });
         }
 
+        // Use special guest ID for non-authenticated users
+        const userId = req.userId || 'guest';
+        const username = req.user?.username || 'Guest';
+
         // Check if user already listened
         const alreadyListened = song.listens.some(
-            l => l.userId.toString() === req.userId.toString()
+            l => l.userId.toString() === userId.toString()
         );
 
         if (!alreadyListened) {
             song.listens.push({
-                userId: req.userId,
-                username: req.user.username,
+                userId: userId,
+                username: username,
                 listenedAt: new Date()
             });
             song.listensCount += 1;

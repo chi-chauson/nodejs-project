@@ -4,49 +4,81 @@ React-based frontend application for The Playlister music playlist manager.
 
 ## Features
 
-- 🎵 Create and manage personal playlists
-- 🔍 Search and filter playlists by name, user, song title, artist, and year
+- 🔐 Full user authentication with JWT tokens (register, login, logout)
+- 🎭 Guest mode for browsing without account
+- 🎵 Create, edit, delete, and copy playlists
+- 🎸 Browse and manage song catalog
+- 🔍 Advanced search and filter by name, user, song title, artist, and year
+- 📊 Multiple sort options (listeners, name, plays)
 - 📺 YouTube video player integration for playing songs
-- 👥 User authentication flow (login/guest mode)
 - ✏️ Edit playlist details and song collections
 - 🎨 Modern, colorful UI with smooth animations
 - 📱 Responsive design for mobile and desktop
+- 🔔 Toast notifications for user actions
+- 💾 Persistent data storage via MongoDB backend
+- ⚡ Real-time updates
 
 ## Tech Stack
 
-- **React 18** - UI library
-- **React Router** - Navigation and routing
-- **Vite** - Build tool and dev server
-- **Lucide React** - Icon library
+- **React 19.2** - UI library
+- **React Router DOM 7.9** - Navigation and routing
+- **Vite 7.2** - Build tool and dev server
+- **Lucide React 0.555** - Icon library
 - **CSS3** - Styling with gradients and animations
+- **Fetch API** - HTTP requests to backend
+- **localStorage** - JWT token persistence
 
 ## Prerequisites
 
 - [Node.js](https://nodejs.org/) (version 16 or higher)
 - [npm](https://www.npmjs.com/) (comes with Node.js)
+- **Backend API running** on `http://localhost:5000` (see `../back-end/README.md`)
 
 ## Installation
 
 ```bash
 # Install dependencies
 npm install
+
+# Create environment file (optional - defaults work for local development)
+cp .env.example .env
 ```
+
+## Environment Configuration
+
+Create a `.env` file in the `front-end` directory:
+
+```env
+VITE_API_URL=http://localhost:5000/api
+```
+
+This is optional - the default value will work for local development.
 
 ## Running the Application
 
+**Important**: Make sure the backend server is running first!
+
 ```bash
-# Start development server
+# In another terminal, start backend (if not already running)
+cd ../back-end
+npm run dev
+
+# Then start frontend
+cd ../front-end
 npm run dev
 ```
 
 Open your browser and navigate to `http://localhost:5173`
 
-## Test Account
+## Test Accounts
 
-To test the full functionality with a logged-in user:
+To test the full functionality with logged-in users (created by backend seed script):
 
-- **Email:** `test@playlister.com`
-- **Password:** `test123`
+- **Email:** `test@playlister.com` / **Password:** `test123` (JoelDemo)
+- **Email:** `alice@playlister.com` / **Password:** `test123` (AliceMusic)
+- **Email:** `bob@playlister.com` / **Password:** `test123` (BobRocks)
+
+Or register a new account through the app!
 
 ## User Modes
 
@@ -73,6 +105,7 @@ src/
 │   │   ├── Modal.jsx / Modal.css
 │   │   ├── Navbar.jsx / Navbar.css
 │   │   ├── Footer.jsx / Footer.css
+│   │   ├── Toast.jsx / Toast.css
 │   │   └── ConfirmationModal.jsx / ConfirmationModal.css
 │   ├── auth/            # Authentication components
 │   │   ├── SignInForm.jsx
@@ -89,7 +122,7 @@ src/
 │   │   ├── PlaylistList.jsx / PlaylistList.css
 │   │   ├── PlaylistCard.jsx / PlaylistCard.css
 │   │   ├── PlayPlaylistModal.jsx / PlayPlaylistModal.css
-│   │   ├── EditPlaylistModal.jsx / EditPlaylistModal.css
+│   │   └── EditPlaylistModal.jsx / EditPlaylistModal.css
 │   └── songs/           # Song catalog
 │       ├── SongCatalogPage.jsx / SongCatalogPage.css
 │       ├── SongSearchSidebar.jsx / SongSearchSidebar.css
@@ -97,7 +130,11 @@ src/
 │       ├── SongCard.jsx / SongCard.css
 │       ├── SongKebabMenu.jsx / SongKebabMenu.css
 │       ├── YouTubePlayer.jsx / YouTubePlayer.css
-│       ├── EditSongModal.jsx / EditSongModal.css
+│       └── EditSongModal.jsx / EditSongModal.css
+├── contexts/
+│   └── ToastContext.jsx # Toast notification context
+├── services/
+│   └── api.js           # Backend API service layer
 ├── App.jsx              # Main app with routing
 ├── App.css              # Global styles
 └── main.jsx             # Application entry point
@@ -141,11 +178,11 @@ Reusable UI components used throughout the app:
 
 ## State Management
 
-Currently using:
 - **React useState** - Local component state
-- **sessionStorage** - Temporary user authentication state
-
-Future: Will integrate with backend API and potentially add Context API or Redux for global state management.
+- **React useEffect** - Data fetching from backend API
+- **ToastContext** - Global toast notification system
+- **localStorage** - JWT token and user data persistence
+- **API Service Layer** - Centralized HTTP requests (`services/api.js`)
 
 ## Styling Approach
 
@@ -161,22 +198,27 @@ Future: Will integrate with backend API and potentially add Context API or Redux
 - Safari (latest)
 - Edge (latest)
 
-## Known Limitations
+## Backend Integration
 
-- All data is currently stored in sessionStorage (temporary)
-- YouTube videos use placeholder IDs
-- No real authentication (test account is hardcoded)
-- No persistence between sessions (data resets on page refresh)
-- No backend integration yet
+The frontend is **fully integrated** with the backend API:
 
-## Next Steps (Backend Integration)
+- ✅ JWT authentication with localStorage persistence
+- ✅ API service layer (`services/api.js`)
+- ✅ Error handling with toast notifications
+- ✅ Loading states for async operations
+- ✅ Real YouTube video IDs from database
+- ✅ Persistent data storage in MongoDB
+- ✅ Input validation on forms
 
-When backend is ready, this frontend will need:
-1. Replace sessionStorage with JWT tokens stored in localStorage
-2. Add API service layer for HTTP requests
-3. Implement proper error handling and loading states
-4. Add form validation with backend verification
-5. Connect YouTube player to real video IDs from database
+See `../back-end/INTEGRATION_GUIDE.md` for integration details.
+
+## Possible Enhancements
+
+1. **Performance**: Add pagination, infinite scroll, caching
+2. **Features**: Drag-and-drop song reordering, favorites, dark mode
+3. **UX**: Keyboard shortcuts, optimistic updates, offline mode
+4. **Testing**: Unit tests, integration tests, E2E tests
+5. **Deployment**: Build optimization, CDN, Progressive Web App
 
 ## Development Guidelines
 

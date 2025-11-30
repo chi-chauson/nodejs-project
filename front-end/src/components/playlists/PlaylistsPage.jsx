@@ -5,34 +5,15 @@ import PlaylistList from './PlaylistList';
 import PlayPlaylistModal from './PlayPlaylistModal';
 import EditPlaylistModal from './EditPlaylistModal';
 import ConfirmationModal from '../common/ConfirmationModal';
+import { authAPI, playlistAPI } from '../../services/api';
+import { useToast } from '../../contexts/ToastContext';
 import './PlaylistsPage.css';
 
 const PlaylistsPage = () => {
-    const [playlists, setPlaylists] = useState([
-        {
-            id: 1,
-            name: "Don't be Rude",
-            user: 'JoelDemo',
-            listeners: 137,
-            avatar: '🎵',
-            songs: [
-                { id: 1, title: 'Come Fly With Me', artist: 'Frank Sinatra', year: 1958, duration: '3:18' },
-                { id: 2, title: 'Fast Train', artist: 'Solomon Burke', year: 1985, duration: '5:43' },
-                { id: 3, title: 'Highway Star', artist: 'Deep Purple', year: 1982, duration: '6:05' }
-            ]
-        },
-        {
-            id: 2,
-            name: 'Spacey',
-            user: 'JoelDemo',
-            listeners: 37,
-            avatar: '🎸',
-            songs: [
-                { id: 4, title: 'Space Oddity', artist: 'David Bowie', year: 1969, duration: '5:18' },
-                { id: 5, title: 'Rocket Man', artist: 'Elton John', year: 1972, duration: '4:41' }
-            ]
-        }
-    ]);
+    const toast = useToast();
+    const [playlists, setPlaylists] = useState([]);
+    const [loading, setLoading] = useState(true);
+    const [error, setError] = useState(null);
 
     const [filters, setFilters] = useState({
         playlistName: '',
@@ -47,23 +28,35 @@ const PlaylistsPage = () => {
     const [editingPlaylist, setEditingPlaylist] = useState(null);
     const [deletingPlaylist, setDeletingPlaylist] = useState(null);
 
-    // Get current user from sessionStorage
+    // Get current user from localStorage
     const [user, setUser] = useState(null);
 
     useEffect(() => {
-        const userMode = sessionStorage.getItem('userMode');
-        const currentUserData = sessionStorage.getItem('currentUser');
-
-        if (userMode === 'loggedIn' && currentUserData) {
-            setUser(JSON.parse(currentUserData));
-        } else {
-            setUser(null); // Guest mode
-        }
+        const currentUser = authAPI.getCurrentUser();
+        setUser(currentUser);
     }, []);
 
+    // Fetch playlists from API
+    useEffect(() => {
+        const fetchPlaylists = async () => {
+            try {
+                setLoading(true);
+                setError(null);
+                const data = await playlistAPI.getAll({ ...filters, sortBy });
+                setPlaylists(data.playlists || []);
+            } catch (err) {
+                setError(err.message);
+                console.error('Failed to fetch playlists:', err);
+            } finally {
+                setLoading(false);
+            }
+        };
+
+        fetchPlaylists();
+    }, [filters, sortBy]);
+
     const handleSearch = () => {
-        console.log('Search with filters:', filters);
-        // TODO: Implement search logic
+        // Filters already trigger useEffect
     };
 
     const handleClear = () => {
@@ -76,15 +69,70 @@ const PlaylistsPage = () => {
         });
     };
 
-    const handleNewPlaylist = () => {
-        console.log('Create new playlist');
-        // TODO: Implement new playlist logic
+    const handleNewPlaylist = async () => {
+        if (!user) {
+            toast.error('Please login to create playlists');
+            return;
+        }
+
+        const name = prompt('Enter playlist name:');
+        if (!name) return;
+
+        try {
+            await playlistAPI.create({ name, isPublic: true });
+            // Refresh playlists
+            const data = await playlistAPI.getAll({ ...filters, sortBy });
+            setPlaylists(data.playlists || []);
+            toast.success(`Playlist "${name}" created successfully`);
+        } catch (err) {
+            toast.error(err.message || 'Failed to create playlist');
+        }
     };
 
-    const handleDeletePlaylist = (id) => {
-        console.log('Delete playlist:', id);
-        // TODO: Implement delete logic
-        setDeletingPlaylist(null);
+    const handleCopyPlaylist = async (playlistId) => {
+        if (!user) {
+            toast.error('Please login to copy playlists');
+            return;
+        }
+
+        try {
+            // Fetch the playlist to copy
+            const { playlist } = await playlistAPI.getById(playlistId);
+
+            // Create new playlist with copy name
+            const copyName = `Copy of ${playlist.name}`;
+            const newPlaylist = await playlistAPI.create({
+                name: copyName,
+                isPublic: playlist.isPublic
+            });
+
+            // Add all songs from original playlist to the new one
+            for (const song of playlist.songs) {
+                await playlistAPI.addSong(newPlaylist.playlist._id, song.songId);
+            }
+
+            // Refresh playlists
+            const data = await playlistAPI.getAll({ ...filters, sortBy });
+            setPlaylists(data.playlists || []);
+
+            toast.success(`Playlist copied successfully as "${copyName}"`);
+        } catch (err) {
+            toast.error(err.message || 'Failed to copy playlist');
+        }
+    };
+
+    const handleDeletePlaylist = async (playlist) => {
+        try {
+            await playlistAPI.delete(playlist._id);
+            // Refresh playlists
+            const data = await playlistAPI.getAll({ ...filters, sortBy });
+            setPlaylists(data.playlists || []);
+            setDeletingPlaylist(null);
+            toast.success(`Playlist "${playlist.name}" deleted successfully`);
+        } catch (err) {
+            toast.error(err.message || 'Failed to delete playlist');
+            setDeletingPlaylist(null);
+        }
     };
 
     return (
@@ -106,7 +154,7 @@ const PlaylistsPage = () => {
                     onPlay={setPlayingPlaylist}
                     onEdit={setEditingPlaylist}
                     onDelete={(playlist) => setDeletingPlaylist(playlist)}
-                    onCopy={(id) => console.log('Copy playlist:', id)}
+                    onCopy={handleCopyPlaylist}
                     onNewPlaylist={handleNewPlaylist}
                     currentUser={user}
                 />
@@ -125,9 +173,14 @@ const PlaylistsPage = () => {
                     playlist={editingPlaylist}
                     isOpen={!!editingPlaylist}
                     onClose={() => setEditingPlaylist(null)}
-                    onSave={(updated) => {
-                        console.log('Save playlist:', updated);
-                        setEditingPlaylist(null);
+                    onSave={async () => {
+                        // Refresh playlists after save
+                        try {
+                            const data = await playlistAPI.getAll({ ...filters, sortBy });
+                            setPlaylists(data.playlists || []);
+                        } catch (err) {
+                            console.error('Failed to refresh playlists:', err);
+                        }
                     }}
                 />
             )}
@@ -136,7 +189,7 @@ const PlaylistsPage = () => {
                 <ConfirmationModal
                     isOpen={!!deletingPlaylist}
                     onClose={() => setDeletingPlaylist(null)}
-                    onConfirm={() => handleDeletePlaylist(deletingPlaylist.id)}
+                    onConfirm={() => handleDeletePlaylist(deletingPlaylist)}
                     title="Delete playlist?"
                     message={`Are you sure you want to delete the ${deletingPlaylist.name} playlist?`}
                     warningText="Doing so means it will be permanently removed."
