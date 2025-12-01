@@ -82,19 +82,11 @@ router.post('/', auth, async (req, res) => {
             });
         }
 
-        // Check if YouTube ID already exists
+        // Check if YouTube ID already exists (this is the only uniqueness constraint)
         const existingYoutubeId = await Song.findOne({ youtubeId: youtubeId.trim() });
         if (existingYoutubeId) {
             return res.status(400).json({
                 error: { message: 'A song with this YouTube ID already exists in catalog' }
-            });
-        }
-
-        // Check if song already exists (by metadata)
-        const existing = await Song.findOne({ title, artist, year });
-        if (existing) {
-            return res.status(400).json({
-                error: { message: 'Song already exists in catalog' }
             });
         }
 
