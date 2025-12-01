@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { Plus } from 'lucide-react';
 import SongCard from './SongCard';
 import Button from '../common/Button';
@@ -15,6 +15,35 @@ const SongList = ({
     userPlaylists,
     currentUser
 }) => {
+    // We don't need a ref on the main container anymore
+    // We need a ref for the "Sentinel" (the end of the list)
+    const endOfListRef = useRef(null);
+    const [isButtonDocked, setIsButtonDocked] = useState(false);
+
+    useEffect(() => {
+        const observer = new IntersectionObserver(
+            ([entry]) => {
+                // If the end of the list is visible, dock the button
+                setIsButtonDocked(entry.isIntersecting);
+            },
+            {
+                root: null, // observe relative to viewport
+                rootMargin: "0px",
+                threshold: 0.1 // Trigger as soon as even 1px of the sentinel is visible
+            }
+        );
+
+        if (endOfListRef.current) {
+            observer.observe(endOfListRef.current);
+        }
+
+        return () => {
+            if (endOfListRef.current) {
+                observer.unobserve(endOfListRef.current);
+            }
+        };
+    }, [songs]); // Re-attach if the list length changes dramatically
+
     return (
         <main className="song-main">
             <div className="song-header">
@@ -39,6 +68,7 @@ const SongList = ({
                     <SongCard
                         key={song._id}
                         song={song}
+                        songData={song}
                         onEdit={() => onEdit(song)}
                         onAddToPlaylist={(playlistId) => onAddToPlaylist(song._id, playlistId)}
                         onRemove={() => onRemove(song)}
@@ -48,15 +78,23 @@ const SongList = ({
                 ))}
             </div>
 
-            <Button
-                variant="primary"
-                size="large"
-                onClick={onNewSong}
-                icon={<Plus size={20} />}
-                className="btn-new-song"
-            >
-                New Song
-            </Button>
+            {/* THE SENTINEL 
+               This empty div marks the physical end of the song list.
+               When this scrolls into view, the Observer triggers.
+            */}
+            <div ref={endOfListRef} style={{ height: '1px', width: '100%' }} />
+
+            <div className={`button-container ${isButtonDocked ? 'docked-wrapper' : ''}`}>
+                <Button
+                    variant="primary"
+                    size="large"
+                    onClick={onNewSong}
+                    icon={<Plus size={20} />}
+                    className={`btn-new-song ${isButtonDocked ? 'btn-new-song-docked' : 'btn-new-song-floating'}`}
+                >
+                    New Song
+                </Button>
+            </div>
         </main>
     );
 };

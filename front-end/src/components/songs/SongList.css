@@ -4,6 +4,10 @@
     border-radius: 1rem;
     padding: 1.5rem;
     box-shadow: 0 10px 15px rgba(0, 0, 0, 0.1);
+    position: relative;
+    /* We need flex column to make sure the footer/button sits at the bottom naturally */
+    display: flex;
+    flex-direction: column; 
 }
 
 .song-header {
@@ -22,12 +26,40 @@
     display: flex;
     flex-direction: column;
     gap: 1rem;
-    margin-bottom: 1.5rem;
+}
+
+/* This holds the button when it is docked so it doesn't jump around */
+.button-container {
+    min-height: 80px; /* Reserves space at the bottom */
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-top: 1rem;
 }
 
 .btn-new-song {
-    margin: 0 auto;
     display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.3s ease;
+    z-index: 100;
+}
+
+/* Floating state - fixed to viewport */
+.btn-new-song-floating {
+    position: fixed;
+    bottom: 2rem;
+    right: 2rem;
+    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.25);
+    /* Ensure it stays on top of other content */
+    z-index: 999; 
+}
+
+/* Docked state - In natural flow */
+.btn-new-song-docked {
+    position: static; 
+    transform: none; /* Remove the translate centering, flexbox handles it now */
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.15);
 }
 
 @media (max-width: 768px) {
@@ -36,4 +68,12 @@
         gap: 1rem;
         align-items: flex-start;
     }
+
+    .btn-new-song-floating {
+        bottom: 1.5rem;
+        right: 1.5rem;
+    }
+    
+    /* We don't need specific media queries for docked anymore 
+       because flexbox handles the positioning automatically */
 }
