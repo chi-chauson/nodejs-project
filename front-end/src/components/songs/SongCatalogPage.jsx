@@ -97,6 +97,21 @@ const SongCatalogPage = () => {
         setEditingSong({});
     };
 
+    const handleCopySong = async (song) => {
+        if (!user) {
+            toast.error('Please login to copy songs');
+            return;
+        }
+        // Open modal with pre-filled song data (except YouTube ID)
+        setEditingSong({
+            title: song.title,
+            artist: song.artist,
+            year: song.year,
+            duration: song.duration,
+            youtubeId: '' // Leave YouTube ID empty - user must enter a different one
+        });
+    };
+
     const handleAddToPlaylist = async (songId, playlistId) => {
         if (!user) {
             toast.error('Please login to add songs to playlists');
@@ -148,6 +163,7 @@ const SongCatalogPage = () => {
                     sortBy={sortBy}
                     onSortChange={setSortBy}
                     onEdit={setEditingSong}
+                    onCopy={handleCopySong}
                     onAddToPlaylist={handleAddToPlaylist}
                     onRemove={(song) => setRemovingSong(song)}
                     onNewSong={handleNewSong}

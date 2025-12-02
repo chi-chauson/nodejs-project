@@ -9,6 +9,7 @@ const SongList = ({
     sortBy,
     onSortChange,
     onEdit,
+    onCopy,
     onAddToPlaylist,
     onRemove,
     onNewSong,
@@ -70,6 +71,7 @@ const SongList = ({
                         song={song}
                         songData={song}
                         onEdit={() => onEdit(song)}
+                        onCopy={() => onCopy(song)}
                         onAddToPlaylist={(playlistId) => onAddToPlaylist(song._id, playlistId)}
                         onRemove={() => onRemove(song)}
                         userPlaylists={userPlaylists}

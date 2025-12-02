@@ -1,8 +1,9 @@
 import React from 'react';
+import { Copy } from 'lucide-react';
 import SongKebabMenu from './SongKebabMenu';
 import './SongCard.css';
 
-const SongCard = ({ song, onEdit, onAddToPlaylist, onRemove, userPlaylists, currentUser }) => {
+const SongCard = ({ song, onEdit, onAddToPlaylist, onRemove, onCopy, userPlaylists, currentUser }) => {
     // Check if current user owns this song
     const isOwner = currentUser && song.addedBy === currentUser._id;
 
@@ -18,14 +19,25 @@ const SongCard = ({ song, onEdit, onAddToPlaylist, onRemove, userPlaylists, curr
                 </div>
             </div>
 
-            <SongKebabMenu
-                song={song}
-                onEdit={onEdit}
-                onAddToPlaylist={onAddToPlaylist}
-                onRemove={() => onRemove(song)}
-                userPlaylists={userPlaylists}
-                isOwner={isOwner}
-            />
+            <div className="song-actions">
+                {currentUser && (
+                    <button
+                        className="copy-btn"
+                        onClick={() => onCopy(song)}
+                        title="Copy song metadata"
+                    >
+                        <Copy size={18} />
+                    </button>
+                )}
+                <SongKebabMenu
+                    song={song}
+                    onEdit={onEdit}
+                    onAddToPlaylist={onAddToPlaylist}
+                    onRemove={() => onRemove(song)}
+                    userPlaylists={userPlaylists}
+                    isOwner={isOwner}
+                />
+            </div>
         </div>
     );
 };

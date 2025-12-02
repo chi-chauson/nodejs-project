@@ -82,11 +82,11 @@ router.post('/', auth, async (req, res) => {
             });
         }
 
-        // Check if song already exists
-        const existing = await Song.findOne({ title, artist, year });
-        if (existing) {
+        // Check if YouTube ID already exists (this is the only uniqueness constraint)
+        const existingYoutubeId = await Song.findOne({ youtubeId: youtubeId.trim() });
+        if (existingYoutubeId) {
             return res.status(400).json({
-                error: { message: 'Song already exists in catalog' }
+                error: { message: 'A song with this YouTube ID already exists in catalog' }
             });
         }
 
@@ -138,6 +138,24 @@ router.put('/:id', auth, async (req, res) => {
         if (duration) song.duration = duration.trim();
 
         await song.save();
+
+        // Update denormalized song data in all playlists that contain this song
+        const Playlist = require('../models/Playlist');
+        await Playlist.updateMany(
+            { 'songs.songId': song._id },
+            {
+                $set: {
+                    'songs.$[elem].title': song.title,
+                    'songs.$[elem].artist': song.artist,
+                    'songs.$[elem].year': song.year,
+                    'songs.$[elem].youtubeId': song.youtubeId,
+                    'songs.$[elem].duration': song.duration
+                }
+            },
+            {
+                arrayFilters: [{ 'elem.songId': song._id }]
+            }
+        );
 
         res.json({
             message: 'Song updated successfully',
