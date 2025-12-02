@@ -139,6 +139,24 @@ router.put('/:id', auth, async (req, res) => {
 
         await song.save();
 
+        // Update denormalized song data in all playlists that contain this song
+        const Playlist = require('../models/Playlist');
+        await Playlist.updateMany(
+            { 'songs.songId': song._id },
+            {
+                $set: {
+                    'songs.$[elem].title': song.title,
+                    'songs.$[elem].artist': song.artist,
+                    'songs.$[elem].year': song.year,
+                    'songs.$[elem].youtubeId': song.youtubeId,
+                    'songs.$[elem].duration': song.duration
+                }
+            },
+            {
+                arrayFilters: [{ 'elem.songId': song._id }]
+            }
+        );
+
         res.json({
             message: 'Song updated successfully',
             song
